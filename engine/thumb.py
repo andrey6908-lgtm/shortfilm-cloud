@@ -139,13 +139,16 @@ def build():
     draw_person(im, d, cam, (1622, hipy), h, "sit_chair", t=0.4, seed=0.7,
                 mood="smile", look=-0.55, skin=(222, 204, 182),
                 cloth=(92, 118, 102), lit=0.8, outfit="jacket", scarf=(196, 150, 86))
-    cup(d, 1402, H*0.845, 62)
+    cup(d, 1486, H*0.862, 56)
 
     # герой крупно: выпученные глаза и синий отсвет телефона снизу
     h, hipy = put(head_y=606, hr=204)
-    inf = draw_person(im, d, cam, (952, hipy), h, "phone_face", t=0.0,
+    # ГОЧА 22.10: худи с капюшоном КРУПНЫМ планом читается как уши — капюшон
+    # рассчитан на фигуру во весь рост, где он уходит за плечи. На обложке
+    # герой в куртке с воротником, силуэт тот же, лишних деталей у лица нет.
+    inf = draw_person(im, d, cam, (952, hipy), h, "sit_bed", t=0.0,
                       mood="wired", look=0.22, lit=1.0,
-                      outfit="hoodie", cloth=(118, 128, 148))
+                      outfit="jacket", cloth=(118, 128, 148))
     hx, hy = inf["head"]; hr = inf["hr"]
     phone_in_hand(im, d, hx - hr*0.10, hy + hr*2.08, hr*0.92)
 
