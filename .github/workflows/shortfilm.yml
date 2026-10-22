@@ -190,3 +190,35 @@ jobs:
           gh release create "$tag" engine/preview/sheet.jpg engine/preview/f*.jpg \
              -R "${{ github.repository }}" -t "$tag" -n "Контактный лист предпросмотра."
           echo "релиз: $tag"
+
+  # -------------------------------------------------------------------- обложка
+  # Превью для YouTube: одна машина рисует thumb.py и кладёт картинку релизом.
+  thumb:
+    needs: setup
+    if: needs.setup.outputs.mode == 'thumb'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.ASSETS_KEY }}
+      - run: git clone --depth 1 git@github.com:${{ github.repository_owner }}/shortfilm-assets.git /tmp/assets
+      - run: pip install --quiet --upgrade numpy pillow
+
+      - name: Нарисовать обложку
+        env:
+          SHORTFILM_FONTS: /tmp/assets/fonts
+        run: |
+          cd engine
+          python3 thumb.py "$PWD/thumb"
+          ls -la thumb
+
+      - name: Выложить обложку релизом
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="thumb-${{ needs.setup.outputs.name }}-${{ github.run_id }}"
+          gh release create "$tag" engine/thumb/thumb.jpg \
+             -R "${{ github.repository }}" -t "$tag" -n "Обложка для YouTube."
+          echo "релиз: $tag"
