@@ -76,11 +76,14 @@ jobs:
           git clone --depth 1 git@github.com:${{ github.repository_owner }}/shortfilm-assets.git /tmp/assets
           ls -la /tmp/assets/fonts
 
+      # ffmpeg берём из PyPI (imageio-ffmpeg), а НЕ из apt: замер 22.10 показал
+      # разброс apt-get от 24 с до 10 минут на разных раннерах — отстающая
+      # машина держала всю матрицу. Через pip это стабильные секунды.
       - name: Поставить numpy, pillow и ffmpeg
         run: |
-          pip install --quiet --upgrade numpy pillow
-          sudo apt-get update -qq || sudo apt-get update -qq -o Acquire::Retries=3 || true
-          sudo apt-get install -y -qq ffmpeg
+          pip install --quiet --upgrade numpy pillow imageio-ffmpeg
+          echo "FF=$(python3 -c 'import imageio_ffmpeg as f; print(f.get_ffmpeg_exe())')" >> "$GITHUB_ENV"
+          "$(python3 -c 'import imageio_ffmpeg as f; print(f.get_ffmpeg_exe())')" -version | head -1
 
       - name: Нарисовать свой отрезок
         env:
@@ -98,7 +101,7 @@ jobs:
       - name: Склеить отрезок в кусок mp4
         run: |
           mkdir -p out
-          ffmpeg -nostdin -hide_banner -loglevel error \
+          "$FF" -nostdin -hide_banner -loglevel error \
             -framerate ${{ needs.setup.outputs.fps }} \
             -start_number "$(cat /tmp/first)" \
             -i engine/frames3/f%05d.jpg \
@@ -127,18 +130,17 @@ jobs:
 
       - name: Поставить ffmpeg
         run: |
-          sudo apt-get update -qq || sudo apt-get update -qq -o Acquire::Retries=3 || true
-          sudo apt-get install -y -qq ffmpeg
+          pip install --quiet --upgrade imageio-ffmpeg
+          echo "FF=$(python3 -c 'import imageio_ffmpeg as f; print(f.get_ffmpeg_exe())')" >> "$GITHUB_ENV"
 
       - name: Склеить куски без перекодирования
         run: |
           ls -la parts
           for f in $(ls parts/part*.mp4 | sort); do echo "file '$PWD/$f'"; done > list.txt
           cat list.txt
-          ffmpeg -nostdin -hide_banner -loglevel error -f concat -safe 0 -i list.txt \
+          "$FF" -nostdin -hide_banner -loglevel error -f concat -safe 0 -i list.txt \
                  -c copy "${{ needs.setup.outputs.name }}.mp4"
           ls -la *.mp4
-          ffprobe -v error -show_entries format=duration,size -of default=nw=1 "${{ needs.setup.outputs.name }}.mp4"
 
       - name: Выложить релизом
         env:
