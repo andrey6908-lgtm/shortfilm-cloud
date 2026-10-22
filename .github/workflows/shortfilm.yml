@@ -1,0 +1,143 @@
+# Облачный рендер анимационной короткометражки.
+#
+# Нагрузка чисто счётная: ни стока, ни поиска, ни ключей — numpy+PIL рисуют
+# каждый кадр с нуля. Поэтому дробится по кадрам идеально: каждая машина
+# берёт свой отрезок, кодирует свой кусок mp4, в конце один раннер склеивает
+# куски без перекодирования и кладёт немой мастер релизом.
+#
+# Звук НЕ едет сюда: музыку и эффекты подмешивает машина пользователя из
+# своей библиотеки на D: — так в облако не уезжает ни одного чужого файла.
+#
+# Шрифты (Calibri/Bahnschrift/Segoe Script) лежат в ПРИВАТНОМ shortfilm-assets
+# и забираются read-only deploy-ключом из секрета ASSETS_KEY. В публичный
+# репозиторий их класть нельзя — это была бы их публичная раздача.
+
+name: shortfilm
+
+on:
+  push:
+    paths: ["job/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: shortfilm
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  # ---------------------------------------------------------------- подготовка
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      name:   ${{ steps.job.outputs.name }}
+      frames: ${{ steps.job.outputs.frames }}
+      fps:    ${{ steps.job.outputs.fps }}
+      shards: ${{ steps.job.outputs.shards }}
+      list:   ${{ steps.job.outputs.list }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: job
+        name: Прочитать задание
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          j = json.load(open("job/job.json", encoding="utf-8"))
+          frames = int(round(j["dur"]*j["fps"]))
+          n = int(j.get("shards", 10))
+          print(f"name={j['name']}")
+          print(f"frames={frames}")
+          print(f"fps={j['fps']}")
+          print(f"shards={n}")
+          print("list=" + json.dumps(list(range(n))))
+          PY
+      - run: |
+          echo "ролик: ${{ steps.job.outputs.name }}"
+          echo "кадров: ${{ steps.job.outputs.frames }}, машин: ${{ steps.job.outputs.shards }}"
+
+  # ------------------------------------------------------------------- рендер
+  render:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJson(needs.setup.outputs.list) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Забрать шрифты из приватного репозитория
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.ASSETS_KEY }}
+      - run: |
+          git clone --depth 1 git@github.com:${{ github.repository_owner }}/shortfilm-assets.git /tmp/assets
+          ls -la /tmp/assets/fonts
+
+      - name: Поставить numpy и pillow
+        run: pip install --quiet --upgrade numpy pillow
+
+      - name: Нарисовать свой отрезок
+        env:
+          SHORTFILM_FONTS: /tmp/assets/fonts
+        run: |
+          total=${{ needs.setup.outputs.frames }}
+          n=${{ needs.setup.outputs.shards }}
+          k=${{ matrix.shard }}
+          a=$(( total*k/n )); b=$(( total*(k+1)/n ))
+          echo "шард $k: кадры $a..$((b-1))"
+          cd engine
+          WORKERS=$(nproc) python3 cloud_render.py "$a" "$b" "$PWD/frames3"
+          echo "$a" > /tmp/first
+
+      - name: Склеить отрезок в кусок mp4
+        run: |
+          mkdir -p out
+          ffmpeg -nostdin -hide_banner -loglevel error \
+            -framerate ${{ needs.setup.outputs.fps }} \
+            -start_number "$(cat /tmp/first)" \
+            -i engine/frames3/f%05d.jpg \
+            -c:v libx264 -preset slow -crf 17 -pix_fmt yuv420p \
+            -x264-params keyint=60:min-keyint=60:scenecut=0 \
+            "out/part$(printf '%03d' ${{ matrix.shard }}).mp4"
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: part-${{ matrix.shard }}
+          path: out/*.mp4
+          retention-days: 1
+
+  # ------------------------------------------------------------------ склейка
+  concat:
+    needs: [setup, render]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: part-*
+          merge-multiple: true
+          path: parts
+
+      - name: Склеить куски без перекодирования
+        run: |
+          ls -la parts
+          for f in $(ls parts/part*.mp4 | sort); do echo "file '$PWD/$f'"; done > list.txt
+          cat list.txt
+          ffmpeg -nostdin -hide_banner -loglevel error -f concat -safe 0 -i list.txt \
+                 -c copy "${{ needs.setup.outputs.name }}.mp4"
+          ls -la *.mp4
+          ffprobe -v error -show_entries format=duration,size -of default=nw=1 "${{ needs.setup.outputs.name }}.mp4"
+
+      - name: Выложить релизом
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="film-${{ needs.setup.outputs.name }}-${{ github.run_id }}"
+          gh release create "$tag" "${{ needs.setup.outputs.name }}.mp4" \
+             -R "${{ github.repository }}" -t "$tag" \
+             -n "Немой мастер. Звук подмешивается на машине пользователя."
+          echo "релиз: $tag"
