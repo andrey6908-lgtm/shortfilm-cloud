@@ -148,7 +148,7 @@ def build():
     # герой в куртке с воротником, силуэт тот же, лишних деталей у лица нет.
     inf = draw_person(im, d, cam, (952, hipy), h, "sit_bed", t=0.0,
                       mood="wired", look=0.22, lit=1.0,
-                      outfit="jacket", cloth=(118, 128, 148))
+                      outfit="crew", cloth=(118, 128, 148))
     hx, hy = inf["head"]; hr = inf["hr"]
     phone_in_hand(im, d, hx - hr*0.10, hy + hr*2.08, hr*0.92)
 
