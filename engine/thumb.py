@@ -100,14 +100,15 @@ def background(im, d):
 
 
 def cup(d, x, y, r):
-    """Чашка на столе — тёплая половина должна читаться как кафе, а не как стена."""
-    d.rounded_rectangle([x-r, y-r*1.1, x+r, y+r*1.1], radius=r*0.30,
-                        fill=(244, 240, 232, 255), outline=(40, 28, 20, 255), width=6)
-    d.arc([x+r*0.5, y-r*0.6, x+r*1.9, y+r*0.8], 300, 60,
-          fill=(40, 28, 20, 255), width=7)
-    for k in range(3):
-        d.arc([x-r*0.7+k*r*0.6, y-r*2.6, x-r*0.2+k*r*0.6, y-r*1.2],
-              200, 340, fill=(214, 196, 176, 150), width=5)
+    """Чашка с блюдцем. Пар не рисуем: дугами он выходит угловатым «^^^»."""
+    d.ellipse([x-r*1.5, y+r*0.85, x+r*1.5, y+r*1.5],
+              fill=(226, 218, 206, 255), outline=(40, 28, 20, 255), width=6)
+    d.arc([x+r*0.45, y-r*0.72, x+r*1.75, y+r*0.58], 290, 70,
+          fill=(40, 28, 20, 255), width=9)
+    d.rounded_rectangle([x-r, y-r*1.05, x+r, y+r*1.05], radius=r*0.26,
+                        fill=(246, 242, 234, 255), outline=(40, 28, 20, 255), width=7)
+    d.ellipse([x-r*0.74, y-r*1.28, x+r*0.74, y-r*0.72],
+              fill=(96, 62, 40, 255), outline=(40, 28, 20, 255), width=5)
 
 
 def phone_in_hand(im, d, x, y, w):
@@ -135,17 +136,17 @@ def build():
 
     # друг в тёплой части: тот, к кому герой так и не поднял глаз
     h, hipy = put(head_y=664, hr=152)
-    draw_person(im, d, cam, (1664, hipy), h, "sit_chair", t=0.4, seed=0.7,
+    draw_person(im, d, cam, (1622, hipy), h, "sit_chair", t=0.4, seed=0.7,
                 mood="smile", look=-0.55, skin=(222, 204, 182),
                 cloth=(92, 118, 102), lit=0.8)
-    cup(d, 1420, H*0.878, 46)
+    cup(d, 1402, H*0.845, 62)
 
     # герой крупно: выпученные глаза и синий отсвет телефона снизу
     h, hipy = put(head_y=606, hr=204)
     inf = draw_person(im, d, cam, (952, hipy), h, "sit_bed", t=0.0,
                       mood="wired", look=0.22, lit=1.0)
     hx, hy = inf["head"]; hr = inf["hr"]
-    phone_in_hand(im, d, hx - hr*0.12, hy + hr*2.45, hr*0.78)
+    phone_in_hand(im, d, hx - hr*0.10, hy + hr*2.08, hr*0.92)
 
     title(d, [("3 000", (255, 255, 255)), ("ИЛИ", (255, 206, 86)),
               ("1?", (255, 255, 255))], 168, 180)
