@@ -76,8 +76,11 @@ jobs:
           git clone --depth 1 git@github.com:${{ github.repository_owner }}/shortfilm-assets.git /tmp/assets
           ls -la /tmp/assets/fonts
 
-      - name: Поставить numpy и pillow
-        run: pip install --quiet --upgrade numpy pillow
+      - name: Поставить numpy, pillow и ffmpeg
+        run: |
+          pip install --quiet --upgrade numpy pillow
+          sudo apt-get update -qq || sudo apt-get update -qq -o Acquire::Retries=3 || true
+          sudo apt-get install -y -qq ffmpeg
 
       - name: Нарисовать свой отрезок
         env:
@@ -121,6 +124,11 @@ jobs:
           pattern: part-*
           merge-multiple: true
           path: parts
+
+      - name: Поставить ffmpeg
+        run: |
+          sudo apt-get update -qq || sudo apt-get update -qq -o Acquire::Retries=3 || true
+          sudo apt-get install -y -qq ffmpeg
 
       - name: Склеить куски без перекодирования
         run: |
