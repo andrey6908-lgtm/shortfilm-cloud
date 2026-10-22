@@ -135,10 +135,10 @@ def draw_person(im, d, cam, hip, h, pose, t=0.0, seed=0.0, skin=CREAM,
 
     hc2, hr2 = head_c, hr
     if outfit == "hoodie":   # капюшон лежит ЗА головой — рисуем до неё
-        ellipse_at(d, cam, (hc2[0]-f*hr2*0.10, hc2[1]+hr2*0.30),
-                   hr2*1.26+stroke, hr2*1.20+stroke, ink, alpha)
-        ellipse_at(d, cam, (hc2[0]-f*hr2*0.10, hc2[1]+hr2*0.30),
-                   hr2*1.26, hr2*1.20, mix(body_col, (0, 0, 0), 0.16), alpha)
+        ellipse_at(d, cam, (hc2[0]-f*hr2*0.16, hc2[1]+hr2*0.42),
+                   hr2*1.42+stroke, hr2*1.34+stroke, ink, alpha)
+        ellipse_at(d, cam, (hc2[0]-f*hr2*0.16, hc2[1]+hr2*0.42),
+                   hr2*1.42, hr2*1.34, mix(body_col, (0, 0, 0), 0.20), alpha)
 
     paint(head, stroke, ink, alpha)
     paint(head, 0, skin, alpha)
@@ -146,13 +146,14 @@ def draw_person(im, d, cam, hip, h, pose, t=0.0, seed=0.0, skin=CREAM,
     if outfit:               # горловина поверх шеи, под руками
         nx, ny = sh_c[0], sh_c[1] - h*0.012
         if outfit == "hoodie":
-            capsule(d, cam, (nx-tw*0.74, ny+h*0.012), (nx+tw*0.74, ny+h*0.012),
-                    h*0.030+stroke*0.8, ink, alpha)
-            capsule(d, cam, (nx-tw*0.74, ny+h*0.012), (nx+tw*0.74, ny+h*0.012),
-                    h*0.030, mix(body_col, (255, 255, 255), 0.10), alpha)
-            for sg in (-1, 1):  # шнурки
-                capsule(d, cam, (nx+sg*tw*0.30, ny+h*0.030),
-                        (nx+sg*tw*0.26, ny+h*0.085), h*0.008, ink, alpha)
+            # ГОЧА 22.10: вертикальные шнурки вместе с подолом и карманом
+            # читались как ЛЯМКИ — фигура выглядела в рабочем комбинезоне.
+            # Осталась только широкая горловина: её хватает, чтобы капюшон
+            # прочитался, и ничего вертикального на груди больше нет.
+            capsule(d, cam, (nx-tw*1.02, ny+h*0.020), (nx+tw*1.02, ny+h*0.020),
+                    h*0.034+stroke*0.8, ink, alpha)
+            capsule(d, cam, (nx-tw*1.02, ny+h*0.020), (nx+tw*1.02, ny+h*0.020),
+                    h*0.034, mix(body_col, (255, 255, 255), 0.12), alpha)
         else:
             for sg in (-1, 1):
                 capsule(d, cam, (nx+sg*tw*0.12, ny+h*0.010),
@@ -169,16 +170,25 @@ def draw_person(im, d, cam, hip, h, pose, t=0.0, seed=0.0, skin=CREAM,
     paint(arms, stroke, ink, alpha)
     paint(arms, 0, body_col, alpha)
 
-    if outfit:               # манжеты и подол — без них рукав не читается
-        for a_i in (1, 4):   # предплечья: [плечо, локоть, кисть] по три записи
+    if outfit:
+        # манжет — короткая тёмная перетяжка у самой кисти, а не весь рукав
+        for a_i in (1, 4):
             seg = arms[a_i]
-            capsule(d, cam, seg[1], seg[2], seg[3]*1.14,
-                    mix(body_col, (0, 0, 0), 0.22), alpha)
-        capsule(d, cam, (hx-tw*0.96, hy0+h*0.030), (hx+tw*0.96, hy0+h*0.030),
-                h*0.018, mix(body_col, (0, 0, 0), 0.22), alpha)
-        if outfit == "hoodie":   # карман-кенгуру
-            capsule(d, cam, (hx-tw*0.70, hy0-h*0.016), (hx+tw*0.70, hy0-h*0.016),
-                    h*0.026, mix(body_col, (0, 0, 0), 0.14), alpha)
+            (ex, ey), (wx, wy) = seg[1], seg[2]
+            mx, my = lerp(ex, wx, 0.80), lerp(ey, wy, 0.80)
+            capsule(d, cam, (mx, my), (wx, wy), seg[3]*1.12,
+                    mix(body_col, (0, 0, 0), 0.26), alpha)
+        # кисти — цвета кожи: иначе рука выглядит culminating в рукав без ладони
+        for a_i in (2, 5):
+            seg = arms[a_i]
+            ellipse_at(d, cam, seg[1], seg[2]+stroke, seg[3]+stroke, ink, alpha)
+            ellipse_at(d, cam, seg[1], seg[2], seg[3], skin, alpha)
+        # подол
+        capsule(d, cam, (hx-tw*0.96, hy0+h*0.034), (hx+tw*0.96, hy0+h*0.034),
+                h*0.013, mix(body_col, (0, 0, 0), 0.26), alpha)
+        if outfit == "hoodie":   # карман-кенгуру: ниже пояса и уже плеч
+            capsule(d, cam, (hx-tw*0.52, hy0-h*0.002), (hx+tw*0.52, hy0-h*0.002),
+                    h*0.020, mix(body_col, (0, 0, 0), 0.16), alpha)
     if hair:
         ellipse_at(d, cam, (head_c[0], head_c[1]-hr*0.28), hr*1.06, hr*0.86, ink, alpha)
         ellipse_at(d, cam, (head_c[0], head_c[1]-hr*0.30), hr*1.0, hr*0.80, hair, alpha)
