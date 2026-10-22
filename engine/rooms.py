@@ -12,12 +12,69 @@ BG    = (7, 8, 11)
 
 def _w(cam, v): return max(1, int(cam.r(v)))
 
-def rrect(d, cam, box, r, fill=None, line=LINE, lw=3.0, alpha=255):
+# ЖИВЫЕ ЛИНИИ (22.10, четвёртый разрыв с оригиналом: «линии математически
+# ровные, у них живые, от руки»). Контур мебели обходится полилинией, точки
+# смещены по нормали на пару пикселей. Смещение считается от МИРОВЫХ координат
+# и не зависит от времени — поэтому линия кривая, но НЕ дрожит между кадрами
+# (дрожание пользователь запретил отдельно: «без тряски»).
+LIVE_AMP = 2.4
+
+def _wob(seed, u, amp=LIVE_AMP):
+    return (math.sin(u*0.031 + seed*5.1) + 0.55*math.sin(u*0.084 + seed*2.3)
+            + 0.3*math.sin(u*0.17 + seed*7.7))*amp*0.6
+
+def _live_pts(x0, y0, x1, y1, r, amp=LIVE_AMP):
+    """Точки по периметру прямоугольника со срезанными углами, с отклонением."""
+    seed = ((x0*0.0131 + y0*0.0217 + x1*0.0083) % 1.0)*6.283
+    r = min(r, (x1-x0)/2, (y1-y0)/2)
+    pts, step = [], 26.0
+    edges = [((x0+r, y0), (x1-r, y0), (0, -1)), ((x1, y0+r), (x1, y1-r), (1, 0)),
+             ((x1-r, y1), (x0+r, y1), (0, 1)),  ((x0, y1-r), (x0, y0+r), (-1, 0))]
+    corners = [((x1-r, y0+r), -90, 0), ((x1-r, y1-r), 0, 90),
+               ((x0+r, y1-r), 90, 180), ((x0+r, y0+r), 180, 270)]
+    u = 0.0
+    for i, ((ax, ay), (bx, by), (nx, ny)) in enumerate(edges):
+        ln = math.hypot(bx-ax, by-ay)
+        n = max(2, int(ln/step))
+        for k in range(n+1):
+            q = k/n
+            w = _wob(seed, u + q*ln, amp)
+            pts.append((ax + (bx-ax)*q + nx*w, ay + (by-ay)*q + ny*w))
+        u += ln
+        cx, cy, a0, a1 = (*corners[i][0], corners[i][1], corners[i][2])
+        for k in range(1, 4):
+            a = math.radians(a0 + (a1-a0)*k/4.0)
+            w = _wob(seed, u + k*6.0, amp)
+            pts.append((cx + math.cos(a)*(r+w), cy + math.sin(a)*(r+w)))
+        u += r*1.6
+    pts.append(pts[0])
+    return pts
+
+def rrect(d, cam, box, r, fill=None, line=LINE, lw=3.0, alpha=255, live=True):
     b = cam.box(*box)
     if fill: d.rounded_rectangle(b, radius=cam.r(r), fill=fill + (alpha,))
-    if line: d.rounded_rectangle(b, radius=cam.r(r), outline=line + (alpha,), width=_w(cam, lw))
+    if not line: return
+    if live and (box[2]-box[0]) > 40 and (box[3]-box[1]) > 24:
+        d.line([cam.p(*q) for q in _live_pts(*box, r)], fill=line + (alpha,),
+               width=_w(cam, lw), joint="curve")
+    else:
+        d.rounded_rectangle(b, radius=cam.r(r), outline=line + (alpha,), width=_w(cam, lw))
 
-def line(d, cam, pts, col=LINE, lw=3.0, alpha=255):
+def line(d, cam, pts, col=LINE, lw=3.0, alpha=255, live=True):
+    """Прямая линия мебели тоже ведётся от руки: каждый отрезок разбивается."""
+    if live and len(pts) >= 2:
+        out = []
+        for i in range(len(pts)-1):
+            (ax, ay), (bx, by) = pts[i], pts[i+1]
+            ln = math.hypot(bx-ax, by-ay)
+            seed = ((ax*0.0131 + ay*0.0217 + bx*0.0083) % 1.0)*6.283
+            nx, ny = (-(by-ay)/ln, (bx-ax)/ln) if ln > 1 else (0, 0)
+            n = max(2, int(ln/26.0))
+            for k in range(n+1):
+                q = k/n
+                w = _wob(seed, q*ln)
+                out.append((ax + (bx-ax)*q + nx*w, ay + (by-ay)*q + ny*w))
+        pts = out
     d.line([cam.p(*p) for p in pts], fill=col + (alpha,), width=_w(cam, lw), joint="curve")
 
 def bedroom(im, d, cam, t=0.0, warm=0.0, lamp=0.0, rain=True, clock_text="23:41",

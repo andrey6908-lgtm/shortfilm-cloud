@@ -379,15 +379,12 @@ def frame(i):
         street_evening(im, d, cam, t, warm=0.10)
         bus_stop(d, cam, 1460)
         draw_person(im, d, cam, (1420, 700), 400, "stand", t=t, seed=1.2, mood="smile",
-                    **GIRL,
-                    look=-0.4, skin=SKIN2, cloth=(96, 110, 126))
+                    **GIRL, look=-0.4, skin=SKIN2)
         draw_person(im, d, cam, (1620, 700), 392, "stand", t=t, seed=1.7, mood="talk",
-                    **GUY,
-                    look=0.4, skin=(234, 222, 206), cloth=(86, 96, 116))
+                    **GUY, look=0.4, skin=(234, 222, 206))
         walk = -260 + l*74
         draw_person(im, d, cam, (560+walk, 712), 430, walk_pose(l*2.6), t=t, seed=0.0,
-                    **HERO,
-                    mood="tired", look=0.0)
+                    **HERO, mood="tired", look=0.0)
         hud(d, cnt(t, 98, 110, 3203, 3246), 0, 255)
         narr(d, [("Он шёл мимо людей.", False)], fade(t, 100.0, 108.6, 0.9, 0.8), im)
 
