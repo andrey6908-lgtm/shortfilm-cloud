@@ -47,6 +47,9 @@ POSES = {
                   ua_l=104, fa_l=92, ua_r=76, fa_r=88, lean=10, head=12, hip_y=0.02),
  "reach":    dict(thigh_l=92, shin_l=90, thigh_r=88, shin_r=90,
                   ua_l=99, fa_l=95, ua_r=38, fa_r=6, lean=-4, head=-8, hip_y=0.0),
+ # рука подносит телефон к лицу — второй разрыв с оригиналом, закрыт 22.10
+ "phone_face":dict(thigh_l=18, shin_l=28, thigh_r=14, shin_r=24,
+                  ua_l=104, fa_l=78, ua_r=58, fa_r=-54, lean=-6, head=8, hip_y=0.0),
 }
 
 def pose_mix(a, b, k):
@@ -62,15 +65,25 @@ def walk_pose(phase, base="stand"):
     p["ua_l"] = 90 - s*15;     p["fa_l"] = p["ua_l"] + 6
     p["ua_r"] = 90 + s*15;     p["fa_r"] = p["ua_r"] + 6
     p["hip_y"] = -abs(c)*0.012
-    p["lean"] = -2
+    # Качание корпуса (22.10): раньше ноги шагали, а туловище ехало ровно —
+    # первый из пяти разрывов с оригиналом. Корпус качается в такт шагу, голова
+    # гасит качание наполовину, как у живого человека.
+    p["lean"] = -2 + s*2.6
+    p["head"] = -s*1.4
     return p
 
 # ---------- отрисовка ----------
 def draw_person(im, d, cam, hip, h, pose, t=0.0, seed=0.0, skin=CREAM,
                 mood="neutral", look=0.0, alpha=255, stroke=None, lit=0.0,
                 flip=False, ink=OUTLINE, face_on=True, lashes=False, hair=None,
-                cloth=None):
-    """hip — точка таза в мировых координатах, h — рост фигуры."""
+                cloth=None, outfit=None, scarf=None):
+    """hip — точка таза в мировых координатах, h — рост фигуры.
+
+    outfit (22.10, третий разрыв с оригиналом): раньше тело было залито одним
+    цветом и читалось как комбинезон. Теперь "hoodie" — капюшон за головой,
+    горловина, карман-кенгуру, манжеты и подол; "jacket" — воротник клином,
+    планка и манжеты. scarf — цвет шарфа, им отличаются второстепенные лица.
+    """
     if isinstance(pose, str): pose = POSES[pose]
     stroke = stroke if stroke is not None else h*0.013
     br = breathe(t, 4.6, h*0.004, seed*2.0)
@@ -116,9 +129,56 @@ def draw_person(im, d, cam, hip, h, pose, t=0.0, seed=0.0, skin=CREAM,
             else: ellipse_at(d, cam, it[1], it[2]+grow, it[3]+grow, col, a)
 
     body_col = cloth or skin
-    for grp, col in ((legs, body_col), (torso, body_col), (head, skin), (arms, body_col)):
+    for grp, col in ((legs, body_col), (torso, body_col)):
         paint(grp, stroke, ink, alpha)
         paint(grp, 0, col, alpha)
+
+    hc2, hr2 = head_c, hr
+    if outfit == "hoodie":   # капюшон лежит ЗА головой — рисуем до неё
+        ellipse_at(d, cam, (hc2[0]-f*hr2*0.10, hc2[1]+hr2*0.30),
+                   hr2*1.26+stroke, hr2*1.20+stroke, ink, alpha)
+        ellipse_at(d, cam, (hc2[0]-f*hr2*0.10, hc2[1]+hr2*0.30),
+                   hr2*1.26, hr2*1.20, mix(body_col, (0, 0, 0), 0.16), alpha)
+
+    paint(head, stroke, ink, alpha)
+    paint(head, 0, skin, alpha)
+
+    if outfit:               # горловина поверх шеи, под руками
+        nx, ny = sh_c[0], sh_c[1] - h*0.012
+        if outfit == "hoodie":
+            capsule(d, cam, (nx-tw*0.74, ny+h*0.012), (nx+tw*0.74, ny+h*0.012),
+                    h*0.030+stroke*0.8, ink, alpha)
+            capsule(d, cam, (nx-tw*0.74, ny+h*0.012), (nx+tw*0.74, ny+h*0.012),
+                    h*0.030, mix(body_col, (255, 255, 255), 0.10), alpha)
+            for sg in (-1, 1):  # шнурки
+                capsule(d, cam, (nx+sg*tw*0.30, ny+h*0.030),
+                        (nx+sg*tw*0.26, ny+h*0.085), h*0.008, ink, alpha)
+        else:
+            for sg in (-1, 1):
+                capsule(d, cam, (nx+sg*tw*0.12, ny+h*0.010),
+                        (nx+sg*tw*0.78, ny+h*0.052), h*0.016,
+                        mix(body_col, (255, 255, 255), 0.12), alpha)
+
+    if scarf:
+        sx, sy = sh_c[0], sh_c[1] + h*0.020
+        capsule(d, cam, (sx-tw*0.82, sy), (sx+tw*0.82, sy), h*0.030, ink, alpha)
+        capsule(d, cam, (sx-tw*0.82, sy), (sx+tw*0.82, sy), h*0.024, scarf, alpha)
+        capsule(d, cam, (sx+f*tw*0.42, sy), (sx+f*tw*0.50, sy+h*0.105), h*0.020, ink, alpha)
+        capsule(d, cam, (sx+f*tw*0.42, sy), (sx+f*tw*0.50, sy+h*0.105), h*0.015, scarf, alpha)
+
+    paint(arms, stroke, ink, alpha)
+    paint(arms, 0, body_col, alpha)
+
+    if outfit:               # манжеты и подол — без них рукав не читается
+        for a_i in (1, 4):   # предплечья: [плечо, локоть, кисть] по три записи
+            seg = arms[a_i]
+            capsule(d, cam, seg[1], seg[2], seg[3]*1.14,
+                    mix(body_col, (0, 0, 0), 0.22), alpha)
+        capsule(d, cam, (hx-tw*0.96, hy0+h*0.030), (hx+tw*0.96, hy0+h*0.030),
+                h*0.018, mix(body_col, (0, 0, 0), 0.22), alpha)
+        if outfit == "hoodie":   # карман-кенгуру
+            capsule(d, cam, (hx-tw*0.70, hy0-h*0.016), (hx+tw*0.70, hy0-h*0.016),
+                    h*0.026, mix(body_col, (0, 0, 0), 0.14), alpha)
     if hair:
         ellipse_at(d, cam, (head_c[0], head_c[1]-hr*0.28), hr*1.06, hr*0.86, ink, alpha)
         ellipse_at(d, cam, (head_c[0], head_c[1]-hr*0.30), hr*1.0, hr*0.80, hair, alpha)

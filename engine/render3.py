@@ -65,6 +65,14 @@ def fade(t, a, b, inn=0.8, out=0.8):
     return int(255*clamp(smoother(clamp(min((t-a)/inn if inn > 0 else 1,
                                             (b-t)/out if out > 0 else 1, 1.0)))))
 
+# Одежда (22.10). Герой во всех сценах в одном худи, иначе он не узнаётся как
+# один человек. Второстепенные — в куртках, девушка со своим характером.
+HERO  = dict(outfit="hoodie", cloth=(118, 128, 148))
+GIRL  = dict(outfit="jacket", cloth=(96, 110, 128), hair=(38, 34, 40),
+             lashes=True, scarf=(206, 84, 94))
+GUY   = dict(outfit="jacket", cloth=(104, 118, 132))
+FRIEND = dict(outfit="jacket", cloth=(92, 118, 102), scarf=(196, 150, 86))
+
 BOT = 930
 def narr(d, parts, alpha, im=None, y=BOT, size=50):
     """Подпись внизу кадра.
@@ -279,10 +287,10 @@ def frame(i):
         walk = -160 + l*58
         ph = l*3.1
         draw_person(im, d, cam, (700+walk, 700), 430, walk_pose(ph), t=t, seed=0.0,
-                    mood="smile" if (l % 5) > 2.2 else "talk", look=0.5)
+                    mood="smile" if (l % 5) > 2.2 else "talk", look=0.5, **HERO)
         draw_person(im, d, cam, (980+walk, 700), 418, walk_pose(ph+2.9), t=t, seed=0.6,
                     mood="talk" if (l % 5) > 2.2 else "smile", look=-0.5, skin=SKIN2,
-                    cloth=(104, 118, 132))
+                    **GIRL)
         narr(d, [("Раньше вечер заканчивался разговором.", False)],
              fade(t, 9.0, 20.5, 0.9, 0.9), im)
 
@@ -294,7 +302,7 @@ def frame(i):
         k = smoother(clamp((l-0.6)/2.4))
         inf = draw_person(im, d, cam, (700, 790), 430, pose_mix("stand", "sit_bed", k),
                           t=t, mood="wired" if l > 5.0 else "neutral",
-                          look=0.4, lit=0.8*clamp((l-3)/2))
+                          look=0.4, lit=0.8*clamp((l-3)/2), **HERO)
         bed_cover(d, cam)
         if l > 3.0: phone_at(im, d, cam, inf["hand_r"], 56, 1.0, l*1.2)
         hud(d, cnt(t, 26, 34, 2417, 2436), 0, fade(t, 25.4, 34, 1.0, 0.01))
@@ -313,8 +321,9 @@ def frame(i):
         bedroom(im, d, cam, t, clock_text="01:07", phone_glow=(752, 600, 200, 0.26))
         dem = draw_demon(im, d, cam, (1215, 846), 440, "stand", t=t,
                          alpha=fade(t, 49.4, 62, 2.2, 0.01), heat=0.9)
-        inf = draw_person(im, d, cam, (700, 790), 430, "sit_bed", t=t, mood="wired",
-                          look=0.4, lit=0.85)
+        inf = draw_person(im, d, cam, (700, 790), 430,
+                          pose_mix("sit_bed", "phone_face", smoother(clamp((l-4.5)/3.0))),
+                          t=t, mood="wired", look=0.4, lit=0.85, **HERO)
         bed_cover(d, cam)
         phone_at(im, d, cam, inf["hand_r"], 56, 1.0, l*1.6)
         hud(d, cnt(t, 48, 62, 2904, 3015), 0, 255)
@@ -329,7 +338,8 @@ def frame(i):
         dem = draw_demon(im, d, cam, (1150, 846), 462, "stand", t=t, heat=1.05)
         inf = draw_person(im, d, cam, (700, 790), 430,
                           pose_mix("sit_bed", "slump", smoother(clamp(l/9))),
-                          t=t, mood="wired" if (l % 5.5) < 1.5 else "tired", lit=0.8)
+                          t=t, mood="wired" if (l % 5.5) < 1.5 else "tired", lit=0.8,
+                          **HERO)
         bed_cover(d, cam)
         phone_at(im, d, cam, inf["hand_r"], 56, 0.9, l*2.0)
         hud(d, cnt(t, 62, 74, 3015, 3108), 0, 255)
@@ -342,7 +352,8 @@ def frame(i):
         cam = room_cam(t)
         bedroom(im, d, cam, t, clock_text="03:21", phone_glow=(770, 648, 220, 0.30))
         dem = draw_demon(im, d, cam, (1010, 790), 430, "sit_bed", t=t, flip=True, heat=1.15)
-        inf = draw_person(im, d, cam, (700, 790), 430, "slump", t=t, mood="tired", lit=0.9)
+        inf = draw_person(im, d, cam, (700, 790), 430, "slump", t=t, mood="tired",
+                          lit=0.9, **HERO)
         bed_cover(d, cam)
         phone_at(im, d, cam, inf["hand_r"], 56, 1.0, l*2.2)
         hud(d, cnt(t, 74, 86, 3108, 3203), 0, 255)
@@ -357,7 +368,7 @@ def frame(i):
         bedroom(im, d, cam, t, warm=0.46, lamp=0.95, clock_text="07:10", rain=False)
         k = smoother(clamp((l-2.5)/4.0))
         draw_person(im, d, cam, (700, lerp(790, 866, k)), 430,
-                    pose_mix("slump", "stand", k), t=t, mood="tired", look=-0.2)
+                    pose_mix("slump", "stand", k), t=t, mood="tired", look=-0.2, **HERO)
         if k < 0.25: bed_cover(d, cam)
         hud(d, 3203, 0, 255)
         narr(d, [("Утро стало наказанием.", False)], fade(t, 88.0, 96.6, 0.9, 0.8), im)
@@ -368,11 +379,14 @@ def frame(i):
         street_evening(im, d, cam, t, warm=0.10)
         bus_stop(d, cam, 1460)
         draw_person(im, d, cam, (1420, 700), 400, "stand", t=t, seed=1.2, mood="smile",
+                    **GIRL,
                     look=-0.4, skin=SKIN2, cloth=(96, 110, 126))
         draw_person(im, d, cam, (1620, 700), 392, "stand", t=t, seed=1.7, mood="talk",
+                    **GUY,
                     look=0.4, skin=(234, 222, 206), cloth=(86, 96, 116))
         walk = -260 + l*74
         draw_person(im, d, cam, (560+walk, 712), 430, walk_pose(l*2.6), t=t, seed=0.0,
+                    **HERO,
                     mood="tired", look=0.0)
         hud(d, cnt(t, 98, 110, 3203, 3246), 0, 255)
         narr(d, [("Он шёл мимо людей.", False)], fade(t, 100.0, 108.6, 0.9, 0.8), im)
@@ -406,7 +420,8 @@ def frame(i):
         cam = room_cam(t)
         bedroom(im, d, cam, t, clock_text="02:46", phone_glow=(752, 610, 230, 0.34))
         dem = draw_demon(im, d, cam, (930, 790), 430, "sit_bed", t=t, flip=True, heat=1.25)
-        inf = draw_person(im, d, cam, (700, 790), 430, "slump", t=t, mood="sad", lit=1.0)
+        inf = draw_person(im, d, cam, (700, 790), 430, "slump", t=t, mood="sad",
+                          lit=1.0, **HERO)
         bed_cover(d, cam)
         phone_at(im, d, cam, inf["hand_r"], 56, 1.0, l*2.4)
         hud(d, cnt(t, 124, 136, 3246, 3290), 0, 255)
@@ -420,7 +435,8 @@ def frame(i):
             cam = room_cam(t)
             bedroom(im, d, cam, t, clock_text="02:58")
             draw_demon(im, d, cam, (1150, 846), 462, "stand", t=t, alpha=92, heat=0.75)
-            inf = draw_person(im, d, cam, (700, 790), 430, "sit_bed", t=t, mood="tired")
+            inf = draw_person(im, d, cam, (700, 790), 430, "sit_bed", t=t, mood="tired",
+                              **HERO)
             bed_cover(d, cam)
             phone_at(im, d, cam, inf["hand_r"], 56, off=True)
             hud(d, 3290, 0, 255)
@@ -434,8 +450,9 @@ def frame(i):
         cam = room_cam(t)
         bedroom(im, d, cam, t, clock_text="03:21", phone_glow=(752, 600, 250, 0.42))
         dem = draw_demon(im, d, cam, (1110, 846), 488, "stand", t=t, heat=1.4)
-        inf = draw_person(im, d, cam, (700, 790), 430, "sit_bed", t=t,
-                          mood="wired" if l > 2.2 else "sad", lit=1.0)
+        inf = draw_person(im, d, cam, (700, 790), 430,
+                          pose_mix("sit_bed", "phone_face", smoother(clamp((l-3.0)/2.5))),
+                          t=t, mood="wired" if l > 2.2 else "sad", lit=1.0, **HERO)
         bed_cover(d, cam)
         phone_at(im, d, cam, inf["hand_r"], 56, 1.0, l*2.6)
         hud(d, cnt(t, 146, 153, 3290, 3341), 0, 255)
@@ -451,10 +468,11 @@ def frame(i):
         px = lerp(700, 1180, k)
         if k < 0.98:
             draw_person(im, d, cam, (px, lerp(790, 866, k)), 430,
-                        pose_mix("sit_bed", "stand", k), t=t, mood="neutral", look=0.5)
+                        pose_mix("sit_bed", "stand", k), t=t, mood="neutral", look=0.5,
+                        **HERO)
         else:
             inf = draw_person(im, d, cam, (1180, 866), 430, "reach", t=t,
-                              mood="neutral", look=0.6)
+                              mood="neutral", look=0.6, **HERO)
             if l > 7.0: phone_at(im, d, cam, inf["hand_r"], 56, 0.9, 0)
         if k < 0.25: bed_cover(d, cam)
         hud(d, 3341, 0, 255)
@@ -469,10 +487,11 @@ def frame(i):
                 lamp=0.5 if night == 30 else 0.0, clock_text=clk)
         draw_demon(im, d, cam, (1150, 846), 462, "stand", t=t, alpha=dal, heat=0.8)
         if night == 30:
-            draw_person(im, d, cam, (640, 764), 360, "lie", t=t, mood="neutral", face_on=True)
+            draw_person(im, d, cam, (640, 764), 360, "lie", t=t, mood="neutral",
+                        face_on=True, **HERO)
             rrect(d, cam, (312, 742, 1140, 886), 18, (50, 40, 34), LINE, 4)
         else:
-            draw_person(im, d, cam, (700, 790), 430, "sit_bed", t=t, mood="neutral")
+            draw_person(im, d, cam, (700, 790), 430, "sit_bed", t=t, mood="neutral", **HERO)
             bed_cover(d, cam)
         hud(d, 0, 0, fade(t, 166+k*4, 170+k*4, 0.7, 0.6), night=night)
 
@@ -481,10 +500,10 @@ def frame(i):
         cam = Cam(lerp(1.02, 1.08, smoother(l/8)), 975, lerp(612, 600, smoother(l/8)))
         cafe_morning(im, d, cam, t)
         draw_person(im, d, cam, (796, 846), 460, "sit_chair", t=t, seed=0.0,
-                    mood="smile" if (l % 4) > 1.8 else "talk", look=0.6, lit=0.7)
+                    mood="smile" if (l % 4) > 1.8 else "talk", look=0.6, lit=0.7, **HERO)
         draw_person(im, d, cam, (1168, 846), 448, "sit_chair", t=t, seed=0.7,
                     mood="talk" if (l % 4) > 1.8 else "smile", look=-0.6,
-                    skin=SKIN2, cloth=(92, 118, 102), lit=0.7)
+                    skin=SKIN2, lit=0.7, **FRIEND)
         table_two(d, cam, t)
         cups_and_hands(d, cam, t)
         hud(d, 3341, 1, fade(t, 178.6, 186.2, 1.0, 0.01), strike=True, amber=True)
