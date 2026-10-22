@@ -135,10 +135,12 @@ def draw_person(im, d, cam, hip, h, pose, t=0.0, seed=0.0, skin=CREAM,
 
     hc2, hr2 = head_c, hr
     if outfit == "hoodie":   # капюшон лежит ЗА головой — рисуем до неё
-        ellipse_at(d, cam, (hc2[0]-f*hr2*0.16, hc2[1]+hr2*0.42),
-                   hr2*1.42+stroke, hr2*1.34+stroke, ink, alpha)
-        ellipse_at(d, cam, (hc2[0]-f*hr2*0.16, hc2[1]+hr2*0.42),
-                   hr2*1.42, hr2*1.34, mix(body_col, (0, 0, 0), 0.20), alpha)
+        # ГОЧА 22.10: капюшон шириной больше 1.3 радиуса головы и поднятый к
+        # лицу читается как ГРИВА или платок. Он должен лежать на плечах.
+        ellipse_at(d, cam, (hc2[0]-f*hr2*0.20, hc2[1]+hr2*0.78),
+                   hr2*1.22+stroke, hr2*0.92+stroke, ink, alpha)
+        ellipse_at(d, cam, (hc2[0]-f*hr2*0.20, hc2[1]+hr2*0.78),
+                   hr2*1.22, hr2*0.92, mix(body_col, (0, 0, 0), 0.22), alpha)
 
     paint(head, stroke, ink, alpha)
     paint(head, 0, skin, alpha)
@@ -181,8 +183,9 @@ def draw_person(im, d, cam, hip, h, pose, t=0.0, seed=0.0, skin=CREAM,
         # кисти — цвета кожи: иначе рука выглядит culminating в рукав без ладони
         for a_i in (2, 5):
             seg = arms[a_i]
-            ellipse_at(d, cam, seg[1], seg[2]+stroke, seg[3]+stroke, ink, alpha)
-            ellipse_at(d, cam, seg[1], seg[2], seg[3], skin, alpha)
+            rr = seg[2]*0.74
+            ellipse_at(d, cam, seg[1], rr+stroke*0.9, rr*0.94+stroke*0.9, ink, alpha)
+            ellipse_at(d, cam, seg[1], rr, rr*0.94, mix(skin, (0, 0, 0), 0.08), alpha)
         # подол
         capsule(d, cam, (hx-tw*0.96, hy0+h*0.034), (hx+tw*0.96, hy0+h*0.034),
                 h*0.013, mix(body_col, (0, 0, 0), 0.26), alpha)

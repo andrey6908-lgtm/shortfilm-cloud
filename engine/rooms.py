@@ -55,7 +55,10 @@ def rrect(d, cam, box, r, fill=None, line=LINE, lw=3.0, alpha=255, live=True):
     if fill: d.rounded_rectangle(b, radius=cam.r(r), fill=fill + (alpha,))
     if not line: return
     if live and (box[2]-box[0]) > 40 and (box[3]-box[1]) > 24:
-        d.line([cam.p(*q) for q in _live_pts(*box, r)], fill=line + (alpha,),
+        # Амплитуда от размера предмета: на чашке 60×44 полный размах 2,4 px
+        # превращал контур в кляксу — мелкие вещи дрожат меньше крупных.
+        k = clamp(min(box[2]-box[0], box[3]-box[1])/150.0, 0.30, 1.0)
+        d.line([cam.p(*q) for q in _live_pts(*box, r, LIVE_AMP*k)], fill=line + (alpha,),
                width=_w(cam, lw), joint="curve")
     else:
         d.rounded_rectangle(b, radius=cam.r(r), outline=line + (alpha,), width=_w(cam, lw))
@@ -220,7 +223,7 @@ def cups_and_hands(d, cam, t=0.0, skin=(238, 230, 218), skin2=(222, 206, 186)):
         for k in range(2):
             ph = t*1.3 + k*2.1 + cx*0.01
             pts = [(cx-9+k*18 + math.sin(ph+j*0.85)*8, 750-j*20) for j in range(5)]
-            line(d, cam, pts, (186, 176, 168), 2.6, 110)
+            line(d, cam, pts, (186, 176, 168), 2.6, 110, live=False)   # пар и так волна
 
 
 def street_evening(im, d, cam, t=0.0, warm=0.30):
