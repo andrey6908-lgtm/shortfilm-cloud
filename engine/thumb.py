@@ -94,9 +94,34 @@ def background(im, d):
                                 radius=h*0.045, fill=(26, 38, 70, a))
 
     # справа: столик кафе под тёплым светом
-    d.rounded_rectangle([W*0.69, H*0.845, W*1.03, H*0.90], radius=14,
+    d.rounded_rectangle([W*0.66, H*0.885, W*1.03, H*0.945], radius=14,
                         fill=(104, 66, 38, 255), outline=(46, 29, 17, 255), width=6)
     add_glow(im, W*0.84, H*0.26, 300, (255, 206, 128), 0.5, 2.0)
+
+
+def cup(d, x, y, r):
+    """Чашка на столе — тёплая половина должна читаться как кафе, а не как стена."""
+    d.rounded_rectangle([x-r, y-r*1.1, x+r, y+r*1.1], radius=r*0.30,
+                        fill=(244, 240, 232, 255), outline=(40, 28, 20, 255), width=6)
+    d.arc([x+r*0.5, y-r*0.6, x+r*1.9, y+r*0.8], 300, 60,
+          fill=(40, 28, 20, 255), width=7)
+    for k in range(3):
+        d.arc([x-r*0.7+k*r*0.6, y-r*2.6, x-r*0.2+k*r*0.6, y-r*1.2],
+              200, 340, fill=(214, 196, 176, 150), width=5)
+
+
+def phone_in_hand(im, d, x, y, w):
+    """Телефон героя: источник холодного света, которым подсвечено лицо."""
+    h = w*1.95
+    add_glow(im, x, y - h*0.1, w*3.0, (120, 175, 255), 0.62, 1.9)
+    d.rounded_rectangle([x-w/2, y-h/2, x+w/2, y+h/2], radius=w*0.17,
+                        fill=(18, 22, 34, 255), outline=(8, 10, 16, 255), width=7)
+    d.rounded_rectangle([x-w*0.40, y-h*0.42, x+w*0.40, y+h*0.42], radius=w*0.10,
+                        fill=(150, 192, 255, 255))
+    for r in range(4):
+        ry = y - h*0.30 + r*h*0.20
+        d.rounded_rectangle([x-w*0.28, ry-h*0.045, x+w*0.28, ry+h*0.045],
+                            radius=h*0.035, fill=(32, 48, 86, 255))
 
 
 def build():
@@ -109,17 +134,18 @@ def build():
     draw_demon(im, d, cam, (436, hipy), h, "stand", t=1.1, heat=1.5)
 
     # друг в тёплой части: тот, к кому герой так и не поднял глаз
-    h, hipy = put(head_y=706, hr=134)
-    draw_person(im, d, cam, (1688, hipy), h, "sit_chair", t=0.4, seed=0.7,
+    h, hipy = put(head_y=664, hr=152)
+    draw_person(im, d, cam, (1664, hipy), h, "sit_chair", t=0.4, seed=0.7,
                 mood="smile", look=-0.55, skin=(222, 204, 182),
                 cloth=(92, 118, 102), lit=0.8)
+    cup(d, 1420, H*0.878, 46)
 
     # герой крупно: выпученные глаза и синий отсвет телефона снизу
     h, hipy = put(head_y=606, hr=204)
     inf = draw_person(im, d, cam, (952, hipy), h, "sit_bed", t=0.0,
                       mood="wired", look=0.22, lit=1.0)
     hx, hy = inf["head"]; hr = inf["hr"]
-    add_glow(im, hx, hy + hr*1.9, hr*2.3, (120, 170, 255), 0.55, 2.0)
+    phone_in_hand(im, d, hx - hr*0.12, hy + hr*2.45, hr*0.78)
 
     title(d, [("3 000", (255, 255, 255)), ("ИЛИ", (255, 206, 86)),
               ("1?", (255, 255, 255))], 168, 180)
