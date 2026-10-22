@@ -32,6 +32,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       name:   ${{ steps.job.outputs.name }}
+      mode:   ${{ steps.job.outputs.mode }}
+      frames_list: ${{ steps.job.outputs.frames_list }}
       frames: ${{ steps.job.outputs.frames }}
       fps:    ${{ steps.job.outputs.fps }}
       shards: ${{ steps.job.outputs.shards }}
@@ -46,6 +48,8 @@ jobs:
           j = json.load(open("job/job.json", encoding="utf-8"))
           frames = int(round(j["dur"]*j["fps"]))
           n = int(j.get("shards", 10))
+          print(f"mode={j.get('mode','full')}")
+          print("frames_list=" + ",".join(str(x) for x in j.get("frames", [])))
           print(f"name={j['name']}")
           print(f"frames={frames}")
           print(f"fps={j['fps']}")
@@ -59,6 +63,7 @@ jobs:
   # ------------------------------------------------------------------- рендер
   render:
     needs: setup
+    if: needs.setup.outputs.mode == 'full'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -119,6 +124,7 @@ jobs:
   # ------------------------------------------------------------------ склейка
   concat:
     needs: [setup, render]
+    if: needs.setup.outputs.mode == 'full'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -150,4 +156,37 @@ jobs:
           gh release create "$tag" "${{ needs.setup.outputs.name }}.mp4" \
              -R "${{ github.repository }}" -t "$tag" \
              -n "Немой мастер. Звук подмешивается на машине пользователя."
+          echo "релиз: $tag"
+
+  # -------------------------------------------------------------- предпросмотр
+  # Смотреть правки глазами, НЕ трогая машину автора: одна машина рисует
+  # названные кадры и кладёт контактный лист релизом.
+  preview:
+    needs: setup
+    if: needs.setup.outputs.mode == 'preview'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.ASSETS_KEY }}
+      - run: git clone --depth 1 git@github.com:${{ github.repository_owner }}/shortfilm-assets.git /tmp/assets
+      - run: pip install --quiet --upgrade numpy pillow
+
+      - name: Нарисовать названные кадры
+        env:
+          SHORTFILM_FONTS: /tmp/assets/fonts
+        run: |
+          cd engine
+          python3 preview.py "${{ needs.setup.outputs.frames_list }}" "$PWD/preview"
+          ls -la preview
+
+      - name: Выложить лист релизом
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="preview-${{ needs.setup.outputs.name }}-${{ github.run_id }}"
+          gh release create "$tag" engine/preview/sheet.jpg engine/preview/f*.jpg \
+             -R "${{ github.repository }}" -t "$tag" -n "Контактный лист предпросмотра."
           echo "релиз: $tag"

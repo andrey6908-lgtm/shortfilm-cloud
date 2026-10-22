@@ -471,24 +471,38 @@ def blurred_room(im, key="n", warm=0.0, scale=1.12):
         _blur_cache[key] = tmp.filter(ImageFilter.GaussianBlur(26*SS))
     im.alpha_composite(_blur_cache[key], (0, 0))
 
+_scrim_cache = {}
 def lower_scrim(im, strength=0.80, top=0.70):
-    """Затемнение низа кадра под подпись — полосами, без полноэкранных слоёв."""
-    d = ImageDraw.Draw(im, "RGBA")
-    y0 = SH*top
-    n = 48
-    for i in range(n):
-        f = (i + 0.5)/n
-        a = int(min(255, (f ** 1.5)*255*strength))
-        if a <= 0: continue
-        ya = y0 + (SH - y0)*i/n
-        yb = y0 + (SH - y0)*(i + 1)/n
-        d.rectangle([0, int(ya), SW, int(yb) + 1], fill=(0, 0, 0, a))
+    """Плавное затемнение низа кадра под подпись.
+
+    ГОЧА 22.10, стоила правки вслепую: ImageDraw.Draw(im, "RGBA") по RGBA-кадру
+    НЕ смешивает, а ЗАМЕЩАЕТ пиксель вместе с альфой. Поэтому попытка рисовать
+    шторку полосами дала не градиент, а чёрную стену, срезавшую треть кадра.
+    Смешивать может только alpha_composite — он здесь и стоит.
+
+    Память бережём иначе: слой хранится РАЗМЕРОМ С ОБЛАСТЬ (треть кадра), а не
+    во весь кадр, и ключей не больше восьми — это ~10 МБ на ключ вместо 33, и
+    кэш не может разрастись на гигабайты, как было до 22.10.
+    """
+    key = (round(strength, 2), round(top, 2))
+    if key not in _scrim_cache:
+        y0 = int(SH*top); h = SH - y0
+        y = np.linspace(0, 1, h).reshape(h, 1)
+        a = np.clip(y, 0, 1) ** 1.5 * 255 * strength
+        sc = np.zeros((h, SW, 4), dtype=np.uint8)
+        sc[..., 3] = np.repeat(a.astype(np.uint8), SW, axis=1)
+        layer = Image.fromarray(sc, "RGBA")
+        if len(_scrim_cache) < 8: _scrim_cache[key] = (layer, y0)
+        else: return im.alpha_composite(layer, (0, y0))
+    layer, y0 = _scrim_cache[key]
+    im.alpha_composite(layer, (0, y0))
 
 def dim(im, a):
-    """Затемнение в чёрный на склейках."""
+    """Затемнение в чёрный на склейках. Только alpha_composite — см. гочу выше:
+    прямоугольник через ImageDraw замещал кадр и превращал плавный провал в
+    резкую склейку."""
     if a <= 1: return
-    ImageDraw.Draw(im, "RGBA").rectangle([0, 0, SW, SH],
-                                         fill=(0, 0, 0, int(min(255, a))))
+    im.alpha_composite(Image.new("RGBA", (SW, SH), (0, 0, 0, int(min(255, a)))), (0, 0))
 
 # ---------- финал кадра ----------
 _vig = None

@@ -9,8 +9,10 @@ from multiprocessing import Pool
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frames3")
 os.makedirs(OUT, exist_ok=True)
-DUR = 190.0
+DUR = 186.0   # 190 минус 4 срезанные с уличной сцены (см. TRIM ниже)
 SKIN2 = (222, 204, 182)
+
+TRIM_AT, TRIM = 18.0, 4.0   # вырез 4 с из уличной сцены, см. frame()
 
 # ---------- сцены: (начало, конец) ----------
 S = {
@@ -30,8 +32,13 @@ CUTS = [(7, .36), (22, .34), (34, .32), (48, .32), (62, .30), (74, .32), (86, .3
         (98, .34), (110, .32), (124, .32), (136, .32), (141.5, .28), (146, .28),
         (153, .34), (166, .32), (170, .22), (174, .22), (178, .36), (186.2, .34)]
 def cut_dim(t):
+    """Затемнение склеек. Считается по НАРУЖНОМУ времени ролика, поэтому точки
+    из CUTS, лежащие после выреза (см. TRIM ниже), сдвигаются на столько же.
+    Так срез уличной сцены приходится ровно в середину провала в чёрный и
+    рывка в кадре не видно."""
     a = 0.0
     for tc, hw in CUTS:
+        tc = tc - TRIM if tc >= TRIM_AT + TRIM else tc
         if abs(t-tc) < hw: a = max(a, 255*smoother(1-abs(t-tc)/hw))
     return a
 
@@ -60,8 +67,15 @@ def fade(t, a, b, inn=0.8, out=0.8):
 
 BOT = 930
 def narr(d, parts, alpha, im=None, y=BOT, size=50):
+    """Подпись внизу кадра.
+
+    ЗАПРЕТ 22.10 (прямое слово пользователя): затемняющая шторка под подписью
+    НЕ рисуется никогда. Она срезала пятую часть кадра и читалась как траурная
+    рамка — «ни в коем случае её не применять никогда, для таких задач».
+    Параметр `im` оставлен, чтобы не переписывать 15 вызовов, и не используется.
+    Читаемость держит мягкая тень в четыре стороны, как в оригинале.
+    """
     if alpha <= 2: return
-    if im is not None: lower_scrim(im, 0.80*alpha/255, 0.70)
     y = y + 7*(1-alpha/255)
     f = FN(size)
     tot = sum(d.textlength(p[0], font=f) for p in parts)
@@ -73,8 +87,9 @@ def narr(d, parts, alpha, im=None, y=BOT, size=50):
                                 fill=MAG + (int(alpha*0.92),))
             d.text((x, y), txt, font=f, fill=(255, 255, 255, alpha), anchor="lm")
         else:
-            d.text((x+2, y+2), txt, font=f, fill=(0, 0, 0, int(alpha*0.5)), anchor="lm")
-            d.text((x, y), txt, font=f, fill=(242, 242, 242, alpha), anchor="lm")
+            for dx, dy in ((0, 3), (0, -2), (3, 1), (-3, 1), (2, 3), (-2, 3)):
+                d.text((x+dx, y+dy), txt, font=f, fill=(0, 0, 0, int(alpha*0.42)), anchor="lm")
+            d.text((x, y), txt, font=f, fill=(246, 246, 246, alpha), anchor="lm")
         x += w
 
 def hud(d, scrolled, known, alpha=255, strike=False, amber=False, night=None):
@@ -192,8 +207,16 @@ def closeup_phone(im, d, cam, t, rows, bright=1.0, chat=False):
                                 outline=OL + (255,), width=max(2, int(cam.r(6))))
 
 # ---------- кадр ----------
+# УКОРОЧЕНИЕ НАЧАЛА (22.10, слово пользователя: «вот это вообще начало,
+# "Раньше вечер заканчивался разговором" — длинноватая сцена, надо немного
+# укоротить»). Срезано 4 секунды с уличной сцены. Сделано СДВИГОМ ВРЕМЕНИ, а не
+# переписыванием шестидесяти абсолютных отметок в раскадровке: наружное время
+# после 18-й секунды отображается на внутреннее +4. Любая правка таймингов ниже
+# по-прежнему считается в старой сетке, ошибиться негде. Длительность ролика при
+# этом 186 с, и ровно на столько же сдвинуты отметки звука в cloud/sound.sh.
 def frame(i):
-    t = i/FPS
+    t_out = i/FPS
+    t = t_out + TRIM if t_out >= TRIM_AT else t_out
     im, d = new_frame((6, 7, 10, 255))
 
     if inside(t, "cold"):
@@ -410,9 +433,14 @@ def frame(i):
         cups_and_hands(d, cam, t)
         hud(d, 3341, 1, fade(t, 178.6, 186.2, 1.0, 0.01), strike=True, amber=True)
         a2 = fade(t, 180.4, 186.2, 0.9, 0.01)
-        lower_scrim(im, 1.0*a2/255, 0.62)
+        # Шторка под финальной надписью снята 22.10 — см. запрет в narr().
+        for dx, dy in ((0, 3), (0, -2), (3, 1), (-3, 1)):
+            d.text((W/2+dx, BOT-58+dy), "Он пролистал три тысячи.", font=FN(42),
+                   fill=(0, 0, 0, int(a2*0.40)), anchor="mm")
+            d.text((W/2+dx, BOT+dy), "Он запомнил один день.", font=FNB(50),
+                   fill=(0, 0, 0, int(a2*0.45)), anchor="mm")
         d.text((W/2, BOT-58), "Он пролистал три тысячи.", font=FN(42),
-               fill=(210, 212, 220, int(a2*0.85)), anchor="mm")
+               fill=(214, 216, 224, int(a2*0.88)), anchor="mm")
         d.text((W/2, BOT), "Он запомнил один день.", font=FNB(50),
                fill=(255, 255, 255, a2), anchor="mm")
 
@@ -429,7 +457,7 @@ def frame(i):
         d.text((W/2, 772), "Или ещё один свайп.", font=FI(40), fill=RED + (a2,), anchor="mm")
 
     letterbox(im)
-    dim(im, cut_dim(t))
+    dim(im, cut_dim(t_out))
     return finish(im).save(f"{OUT}/f{i:05d}.jpg", quality=94)
 
 if __name__ == "__main__":
