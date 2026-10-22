@@ -3,7 +3,7 @@
 import math, random
 import numpy as np
 from PIL import Image, ImageDraw
-from film import W, H, SS, SW, SH, Cam, mix, lerp, clamp, add_glow, soft_ellipse, AMBER, RED, MAG
+from film import W, H, SS, SW, SH, Cam, mix, lerp, clamp, add_glow, soft_ellipse, flicker, AMBER, RED, MAG
 
 LINE  = (96, 104, 124)      # контур мебели в темноте
 LINE2 = (64, 70, 86)        # дальний план
@@ -93,12 +93,15 @@ def bedroom(im, d, cam, t=0.0, warm=0.0, lamp=0.0, rain=True, clock_text="23:41"
     sep = ":" if (t % 2.0) < 1.0 else " "
     d.text(cam.p(cl_x, cl_y), clock_text.replace(":", sep), font=FH(max(8, int(cam.r(38)))),
            fill=(255, 62, 70, 255), anchor="mm")
-    add_glow(im, *cam.p(cl_x, cl_y), cam.r(130), (255, 40, 50), 0.26, 2.3)
+    # живой свет (22.10): приборы дышат яркостью, у каждого своя фаза
+    add_glow(im, *cam.p(cl_x, cl_y), cam.r(130), (255, 40, 50),
+             0.26*flicker(t, 0.11, 0.20, 0.8), 2.3)
 
     # --- пол ---
     line(d, cam, [(-200, 952), (W+200, 952)], L2, 4)
     if lamp > 0:
-        add_glow(im, *cam.p(980, 300), cam.r(620), AMBER, 0.26*lamp, 2.3)
+        add_glow(im, *cam.p(980, 300), cam.r(620), AMBER,
+                 0.26*lamp*flicker(t, 0.43, 0.14, 0.5), 2.3)
     if phone_glow:
         px, py, pr, st = phone_glow
         add_glow(im, *cam.p(px, py), cam.r(pr), (150, 185, 255), st, 2.3)
@@ -128,7 +131,8 @@ def cafe_morning(im, d, cam, t=0.0):
     d.line([cam.p(960, 0), cam.p(960, 250)], fill=(70, 50, 34, 255), width=_w(cam, 4))
     d.chord(cam.box(870, 210, 1050, 330), 180, 360, fill=(246, 190, 96, 255))
     d.chord(cam.box(870, 210, 1050, 330), 180, 360, outline=(130, 96, 50, 255), width=_w(cam, 4))
-    add_glow(im, *cam.p(960, 320), cam.r(420), (255, 198, 112), 0.55, 2.0)
+    add_glow(im, *cam.p(960, 320), cam.r(420), (255, 198, 112),
+             0.55*flicker(t, 0.67, 0.11, 0.45), 2.0)
     # полка с кружками
     line(d, cam, [(70, 372), (310, 372)], (104, 74, 48), 5)
     for i in range(3):
@@ -192,7 +196,8 @@ def street_evening(im, d, cam, t=0.0, warm=0.30):
         line(d, cam, [(lx, 840), (lx, 420)], (110, 118, 140), 7)
         line(d, cam, [(lx, 424), (lx+74, 410)], (110, 118, 140), 6)
         d.ellipse(cam.box(lx+58, 398, lx+102, 428), fill=(255, 222, 160, 255))
-        add_glow(im, *cam.p(lx+80, 414), cam.r(240), (255, 210, 150), 0.42, 2.1)
+        add_glow(im, *cam.p(lx+80, 414), cam.r(240), (255, 210, 150),
+                 0.42*flicker(t, lx*0.0013, 0.17, 0.7), 2.1)
 
 def bus_stop(d, cam, x=1400):
     rrect(d, cam, (x-300, 470, x+300, 500), 6, (34, 38, 50), (118, 126, 148), 4)

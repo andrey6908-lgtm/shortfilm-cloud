@@ -439,7 +439,7 @@ def city(im, d, cam, warm=1.0, t=0.0):
         cyy = rc.uniform(120, 360)
         soft_ellipse(im, cxx, cyy, rc.uniform(180, 320), rc.uniform(26, 52),
                      mix((40, 48, 66), (255, 196, 128), warm), 0.26, 1.5)
-    add_glow(im, W*0.70, H*0.62, 680, AMBER, 0.50*warm, 2.0)
+    add_glow(im, W*0.70, H*0.62, 680, AMBER, 0.50*warm*flicker(t, 0.29, 0.10, 0.4), 2.0)
     rnd = random.Random(21)
     for layer, (col, hmin, hmax) in enumerate([((36, 22, 15), 240, 470), ((22, 14, 10), 150, 330)]):
         c = mix((16, 20, 30), col, warm)
@@ -459,7 +459,8 @@ def city(im, d, cam, warm=1.0, t=0.0):
     # фонари
     for lx in (250, 760, 1300, 1790):
         d.rectangle([lx-5, H*0.60, lx+5, H*0.79], fill=mix((14, 17, 25), (36, 23, 14), warm) + (255,))
-        add_glow(im, lx, H*0.595, 54, (255, 214, 150), 0.55, 2.0)
+        add_glow(im, lx, H*0.595, 54, (255, 214, 150),
+                 0.55*flicker(t, lx*0.0017, 0.18, 0.75), 2.0)
 
 # ---------- интерфейс ----------
 _blur_cache = {}
@@ -505,6 +506,20 @@ def dim(im, a):
     im.alpha_composite(Image.new("RGBA", (SW, SH), (0, 0, 0, int(min(255, a)))), (0, 0))
 
 # ---------- финал кадра ----------
+def flicker(t, seed=0.0, amp=0.16, speed=1.0):
+    """Живой свет: множитель яркости около единицы.
+
+    Сумма трёх несоразмерных синусов — свет «дышит» и не попадает в один такт,
+    поэтому глаз не ловит период. Стробоскопа нет принципиально: правка 22.10
+    по слову пользователя — «чтобы лампочки, фонари становились чуть ярче, чуть
+    тусклее», а не мигали. Держать amp не выше 0.25, иначе читается как авария
+    в электросети.
+    """
+    a = (math.sin(t*0.83*speed + seed*6.3)
+         + 0.62*math.sin(t*1.47*speed + seed*2.7 + 1.1)
+         + 0.38*math.sin(t*2.61*speed + seed*4.1 + 2.3))
+    return 1.0 + amp*(a/2.0)
+
 _vig = None
 def vignette():
     global _vig

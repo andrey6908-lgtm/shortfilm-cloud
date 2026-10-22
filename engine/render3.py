@@ -126,8 +126,31 @@ def bubble(d, text, x, y, mine, alpha, size):
 
 def cnt(t, a, b, v0, v1): return int(lerp(v0, v1, clamp((t-a)/(b-a))))
 
-def whisper(d, text, t, t0, hold=3.2, type_dur=1.7, size=56, x=330, y=252):
-    """Реплика демона: его почерк, печатается буква за буквой, тает."""
+def demon_anchor(cam, info, up=1.45):
+    """Точка над головой демона в экранных координатах — туда кладётся реплика."""
+    hc, hr = info["head"], info["hr"]
+    return cam.p(hc[0], hc[1] - hr*up)
+
+def _wrap(d, text, f, max_w):
+    out, cur = [], ""
+    for w in text.split():
+        trial = (cur + " " + w).strip()
+        if not cur or d.textlength(trial, font=f) <= max_w: cur = trial
+        else: out.append(cur); cur = w
+    if cur: out.append(cur)
+    return out
+
+def whisper(d, text, t, t0, hold=3.2, type_dur=1.7, size=56, x=330, y=252,
+            at=None, max_w=540):
+    """Реплика демона: его почерк, печатается буква за буквой, тает.
+
+    22.10, слово пользователя: «если говорит демон, надо эти слова ближе к нему
+    ставить». Поэтому реплика теперь привязана к ЕГО голове — `at` принимает
+    экранную точку от demon_anchor(), текст центрируется по ней, при нужде
+    переносится на две строки и зажимается в границы кадра. Старое положение
+    (вверху под счётчиком, как в оригинале Day One) остаётся запасным: без `at`
+    всё работает по-прежнему.
+    """
     if t < t0: return
     el = t - t0
     out = t0 + type_dur + hold
@@ -138,11 +161,37 @@ def whisper(d, text, t, t0, hold=3.2, type_dur=1.7, size=56, x=330, y=252):
     shown = text[:n]
     if not shown: return
     f = FW(size)
-    d.text((x+2, y+3), shown, font=f, fill=(0, 0, 0, int(a*0.45)), anchor="lm")
-    d.text((x, y), shown, font=f, fill=(255, 116, 184, a), anchor="lm")
-    if n < len(text) and (t*6) % 2 < 1:
-        w = d.textlength(shown, font=f)
-        d.line([(x+w+6, y-size*0.34), (x+w+6, y+size*0.30)], fill=(255, 116, 184, a), width=3)
+
+    if at is None:
+        d.text((x+2, y+3), shown, font=f, fill=(0, 0, 0, int(a*0.45)), anchor="lm")
+        d.text((x, y), shown, font=f, fill=(255, 116, 184, a), anchor="lm")
+        if n < len(text) and (t*6) % 2 < 1:
+            w = d.textlength(shown, font=f)
+            d.line([(x+w+6, y-size*0.34), (x+w+6, y+size*0.30)], fill=(255, 116, 184, a), width=3)
+        return
+
+    lines = _wrap(d, text, f, max_w)
+    lh = size*1.18
+    cx, by = at
+    # не выпускаем реплику за кинополосы и за края кадра
+    top = by - lh*(len(lines)-1)
+    if top < H*0.14: by += H*0.14 - top
+    left_pad = max(d.textlength(ln, font=f) for ln in lines)/2 + 40
+    cx = min(max(cx, left_pad), W - left_pad)
+
+    done = 0
+    for i, ln in enumerate(lines):
+        if done >= n: break
+        part = ln[:max(0, n - done)]
+        done += len(ln) + 1
+        if not part: break
+        ly = by - lh*(len(lines)-1-i)
+        d.text((cx+2, ly+3), part, font=f, fill=(0, 0, 0, int(a*0.5)), anchor="mm")
+        d.text((cx, ly), part, font=f, fill=(255, 116, 184, a), anchor="mm")
+        if n < len(text) and part is not None and (t*6) % 2 < 1 and done >= n:
+            w = d.textlength(part, font=f)
+            d.line([(cx+w/2+8, ly-size*0.34), (cx+w/2+8, ly+size*0.30)],
+                   fill=(255, 116, 184, a), width=3)
 
 def phone_at(im, d, cam, p, w, bright=1.0, rows=0.0, off=False, ang=0.0):
     """Телефон в точке кисти."""
@@ -244,7 +293,8 @@ def frame(i):
                 phone_glow=(752, 600, 200, 0.26*clamp((l-3)/2)))
         k = smoother(clamp((l-0.6)/2.4))
         inf = draw_person(im, d, cam, (700, 790), 430, pose_mix("stand", "sit_bed", k),
-                          t=t, mood="neutral", look=0.4, lit=0.8*clamp((l-3)/2))
+                          t=t, mood="wired" if l > 5.0 else "neutral",
+                          look=0.4, lit=0.8*clamp((l-3)/2))
         bed_cover(d, cam)
         if l > 3.0: phone_at(im, d, cam, inf["hand_r"], 56, 1.0, l*1.2)
         hud(d, cnt(t, 26, 34, 2417, 2436), 0, fade(t, 25.4, 34, 1.0, 0.01))
@@ -261,40 +311,43 @@ def frame(i):
         l = lt(t, "appear")
         cam = room_cam(t)
         bedroom(im, d, cam, t, clock_text="01:07", phone_glow=(752, 600, 200, 0.26))
-        draw_demon(im, d, cam, (1215, 846), 440, "stand", t=t,
-                   alpha=fade(t, 49.4, 62, 2.2, 0.01))
-        inf = draw_person(im, d, cam, (700, 790), 430, "sit_bed", t=t, mood="neutral",
+        dem = draw_demon(im, d, cam, (1215, 846), 440, "stand", t=t,
+                         alpha=fade(t, 49.4, 62, 2.2, 0.01), heat=0.9)
+        inf = draw_person(im, d, cam, (700, 790), 430, "sit_bed", t=t, mood="wired",
                           look=0.4, lit=0.85)
         bed_cover(d, cam)
         phone_at(im, d, cam, inf["hand_r"], 56, 1.0, l*1.6)
         hud(d, cnt(t, 48, 62, 2904, 3015), 0, 255)
-        whisper(d, "ещё один.", t, 54.6, hold=3.4)
+        whisper(d, "ещё один.", t, 54.6, hold=3.4, size=50,
+                at=demon_anchor(cam, dem) if dem else None)
         narr(d, [("Сначала он выбирал, что смотреть.", False)], fade(t, 50.0, 60.6, 0.9, 0.9), im)
 
     elif inside(t, "deep"):
         l = lt(t, "deep")
         cam = room_cam(t)
         bedroom(im, d, cam, t, clock_text="02:14", phone_glow=(752, 604, 190, 0.24))
-        draw_demon(im, d, cam, (1150, 846), 462, "stand", t=t)
+        dem = draw_demon(im, d, cam, (1150, 846), 462, "stand", t=t, heat=1.05)
         inf = draw_person(im, d, cam, (700, 790), 430,
                           pose_mix("sit_bed", "slump", smoother(clamp(l/9))),
-                          t=t, mood="tired", lit=0.8)
+                          t=t, mood="wired" if (l % 5.5) < 1.5 else "tired", lit=0.8)
         bed_cover(d, cam)
         phone_at(im, d, cam, inf["hand_r"], 56, 0.9, l*2.0)
         hud(d, cnt(t, 62, 74, 3015, 3108), 0, 255)
-        whisper(d, "кто вообще спит в твоём возрасте?", t, 64.4, hold=3.6, size=50)
+        whisper(d, "кто вообще спит в твоём возрасте?", t, 64.4, hold=3.6, size=46,
+                at=demon_anchor(cam, dem) if dem else None, max_w=470)
         narr(d, [("Потом выбирали за него.", False)], fade(t, 63.5, 72.6, 0.9, 0.8), im)
 
     elif inside(t, "lying"):
         l = lt(t, "lying")
         cam = room_cam(t)
         bedroom(im, d, cam, t, clock_text="03:21", phone_glow=(770, 648, 220, 0.30))
-        draw_demon(im, d, cam, (1010, 790), 430, "sit_bed", t=t, flip=True)
+        dem = draw_demon(im, d, cam, (1010, 790), 430, "sit_bed", t=t, flip=True, heat=1.15)
         inf = draw_person(im, d, cam, (700, 790), 430, "slump", t=t, mood="tired", lit=0.9)
         bed_cover(d, cam)
         phone_at(im, d, cam, inf["hand_r"], 56, 1.0, l*2.2)
         hud(d, cnt(t, 74, 86, 3108, 3203), 0, 255)
-        whisper(d, "видишь? тебе никто и не нужен.", t, 76.6, hold=3.8, size=52)
+        whisper(d, "видишь? тебе никто и не нужен.", t, 76.6, hold=3.8, size=46,
+                at=demon_anchor(cam, dem) if dem else None, max_w=470)
         narr(d, [("Он перестал замечать, где кончается ночь.", False)],
              fade(t, 75.5, 84.6, 0.9, 0.8), im)
 
@@ -352,12 +405,13 @@ def frame(i):
         l = lt(t, "bottom")
         cam = room_cam(t)
         bedroom(im, d, cam, t, clock_text="02:46", phone_glow=(752, 610, 230, 0.34))
-        draw_demon(im, d, cam, (930, 790), 430, "sit_bed", t=t, flip=True)
+        dem = draw_demon(im, d, cam, (930, 790), 430, "sit_bed", t=t, flip=True, heat=1.25)
         inf = draw_person(im, d, cam, (700, 790), 430, "slump", t=t, mood="sad", lit=1.0)
         bed_cover(d, cam)
         phone_at(im, d, cam, inf["hand_r"], 56, 1.0, l*2.4)
         hud(d, cnt(t, 124, 136, 3246, 3290), 0, 255)
-        whisper(d, "остались только мы с тобой.", t, 126.6, hold=3.6, size=52)
+        whisper(d, "остались только мы с тобой.", t, 126.6, hold=3.6, size=46,
+                at=demon_anchor(cam, dem) if dem else None, max_w=470)
         narr(d, [("Ждать стало нечего.", False)], fade(t, 126.0, 134.6, 0.9, 0.8), im)
 
     elif inside(t, "off"):
@@ -365,8 +419,8 @@ def frame(i):
         if t < 141.5:
             cam = room_cam(t)
             bedroom(im, d, cam, t, clock_text="02:58")
-            draw_demon(im, d, cam, (1150, 846), 462, "stand", t=t, alpha=92)
-            inf = draw_person(im, d, cam, (700, 790), 430, "sit_bed", t=t, mood="neutral")
+            draw_demon(im, d, cam, (1150, 846), 462, "stand", t=t, alpha=92, heat=0.75)
+            inf = draw_person(im, d, cam, (700, 790), 430, "sit_bed", t=t, mood="tired")
             bed_cover(d, cam)
             phone_at(im, d, cam, inf["hand_r"], 56, off=True)
             hud(d, 3290, 0, 255)
@@ -379,12 +433,14 @@ def frame(i):
         l = lt(t, "relapse")
         cam = room_cam(t)
         bedroom(im, d, cam, t, clock_text="03:21", phone_glow=(752, 600, 250, 0.42))
-        draw_demon(im, d, cam, (1110, 846), 488, "stand", t=t)
-        inf = draw_person(im, d, cam, (700, 790), 430, "sit_bed", t=t, mood="sad", lit=1.0)
+        dem = draw_demon(im, d, cam, (1110, 846), 488, "stand", t=t, heat=1.4)
+        inf = draw_person(im, d, cam, (700, 790), 430, "sit_bed", t=t,
+                          mood="wired" if l > 2.2 else "sad", lit=1.0)
         bed_cover(d, cam)
         phone_at(im, d, cam, inf["hand_r"], 56, 1.0, l*2.6)
         hud(d, cnt(t, 146, 153, 3290, 3341), 0, 255)
-        whisper(d, "я же говорил.", t, 147.0, hold=2.4, type_dur=1.1, size=54)
+        whisper(d, "я же говорил.", t, 147.0, hold=2.4, type_dur=1.1, size=50,
+                at=demon_anchor(cam, dem) if dem else None)
         narr(d, [("Он включил его снова.", False)], fade(t, 147.4, 152.4, 0.9, 0.6), im)
 
     elif inside(t, "turn"):
@@ -411,7 +467,7 @@ def frame(i):
         cam = room_cam(t)
         bedroom(im, d, cam, t, warm=0.16 if night == 30 else 0.0,
                 lamp=0.5 if night == 30 else 0.0, clock_text=clk)
-        draw_demon(im, d, cam, (1150, 846), 462, "stand", t=t, alpha=dal)
+        draw_demon(im, d, cam, (1150, 846), 462, "stand", t=t, alpha=dal, heat=0.8)
         if night == 30:
             draw_person(im, d, cam, (640, 764), 360, "lie", t=t, mood="neutral", face_on=True)
             rrect(d, cam, (312, 742, 1140, 886), 18, (50, 40, 34), LINE, 4)
@@ -436,11 +492,11 @@ def frame(i):
         # Шторка под финальной надписью снята 22.10 — см. запрет в narr().
         for dx, dy in ((0, 3), (0, -2), (3, 1), (-3, 1)):
             d.text((W/2+dx, BOT-58+dy), "Он пролистал три тысячи.", font=FN(42),
-                   fill=(0, 0, 0, int(a2*0.40)), anchor="mm")
+                   fill=(0, 0, 0, int(a2*0.58)), anchor="mm")
             d.text((W/2+dx, BOT+dy), "Он запомнил один день.", font=FNB(50),
-                   fill=(0, 0, 0, int(a2*0.45)), anchor="mm")
+                   fill=(0, 0, 0, int(a2*0.62)), anchor="mm")
         d.text((W/2, BOT-58), "Он пролистал три тысячи.", font=FN(42),
-               fill=(214, 216, 224, int(a2*0.88)), anchor="mm")
+               fill=(236, 238, 244, int(a2*0.92)), anchor="mm")
         d.text((W/2, BOT), "Он запомнил один день.", font=FNB(50),
                fill=(255, 255, 255, a2), anchor="mm")
 

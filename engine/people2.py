@@ -4,7 +4,7 @@ import math
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 from film import (W, H, SS, SW, SH, SDraw, Cam, mix, lerp, clamp, smoother, blink,
-                  breathe, add_glow, soft_ellipse, CREAM, RED, MAG, AMBER)
+                  breathe, add_glow, soft_ellipse, flicker, CREAM, RED, MAG, AMBER)
 
 OUTLINE = (12, 12, 14)
 D2R = math.pi/180.0
@@ -137,8 +137,15 @@ def draw_person(im, d, cam, hip, h, pose, t=0.0, seed=0.0, skin=CREAM,
 def face(d, cam, hx, hy, hr, t=0.0, seed=0.0, alpha=255, mood="neutral",
          look=0.0, skin=CREAM, lashes=False):
     bl = blink(t, seed)
-    ew, ex = hr*0.215, hr*0.345
-    eh = hr*0.265*(1.0-bl*0.92)
+    # «wired» — залип в ленту: глаза выпучены, зрачок мелкий, почти не моргает.
+    # «tired» — никакущий: веко сползает ниже половины. Оба настроения заказаны
+    # пользователем 22.10 («когда листает — глаза выпученные, а хочет спать —
+    # никакущий»), ими и отыгрывается ночь.
+    wide = 1.0
+    if mood == "wired":
+        bl *= 0.28; wide = 1.52
+    ew, ex = hr*0.215*(1.12 if mood == "wired" else 1.0), hr*0.345
+    eh = hr*0.265*wide*(1.0-bl*0.92)
     ey = hy + hr*0.06
     dx = look*hr*0.09
     ink = OUTLINE + (alpha,)
@@ -150,14 +157,15 @@ def face(d, cam, hx, hy, hr, t=0.0, seed=0.0, alpha=255, mood="neutral",
         d.ellipse(cam.box(cxx-ew, ey-eh, cxx+ew, ey+eh), fill=(252, 252, 252, alpha))
         d.ellipse(cam.box(cxx-ew, ey-eh, cxx+ew, ey+eh), outline=ink,
                   width=max(1, int(cam.r(hr*0.030))))
-        pr = min(ew*0.60, eh*0.70)
+        pr = min(ew*0.42, eh*0.40) if mood == "wired" else min(ew*0.60, eh*0.70)
         px, py = cxx + look*ew*0.30, ey + eh*0.10
         d.ellipse(cam.box(px-pr, py-pr, px+pr, py+pr), fill=ink)
         d.ellipse(cam.box(px-pr*0.65, py-pr*0.85, px-pr*0.29, py-pr*0.49),
                   fill=(255, 255, 255, alpha))
         if mood in ("tired", "sad"):
-            d.chord(cam.box(cxx-ew, ey-eh, cxx+ew, ey+eh), 180, 360, fill=skin+(alpha,))
-            d.line([cam.p(cxx-ew, ey-eh*0.05), cam.p(cxx+ew, ey-eh*0.05)], fill=ink,
+            lid = eh*(0.30 if mood == "tired" else 0.0)   # усталое веко ниже половины
+            d.chord(cam.box(cxx-ew, ey-eh, cxx+ew, ey+eh+lid*2), 180, 360, fill=skin+(alpha,))
+            d.line([cam.p(cxx-ew, ey-eh*0.05+lid), cam.p(cxx+ew, ey-eh*0.05+lid)], fill=ink,
                    width=max(1, int(cam.r(hr*0.032))))
         if lashes:
             for k in (-1, 0, 1):
@@ -165,7 +173,7 @@ def face(d, cam, hx, hy, hr, t=0.0, seed=0.0, alpha=255, mood="neutral",
                 d.line([cam.p(lx, ey-eh*1.05), cam.p(lx+s*ew*0.20, ey-eh*1.50)],
                        fill=ink, width=max(1, int(cam.r(hr*0.028))))
     bw = hr*0.30
-    by = ey - hr*(0.40 if mood != "sad" else 0.34) - bl*hr*0.03
+    by = ey - hr*(0.40 if mood != "sad" else 0.34) - bl*hr*0.03 - (hr*0.07 if mood == "wired" else 0)
     for s in (-1, 1):
         inner = (hx+s*(ex-bw*0.75)+dx, by + (hr*0.075 if mood == "sad" else -hr*0.02))
         outer = (hx+s*(ex+bw*0.75)+dx, by - (hr*0.055 if mood in ("angry", "tired") else 0.0))
@@ -181,6 +189,9 @@ def face(d, cam, hx, hy, hr, t=0.0, seed=0.0, alpha=255, mood="neutral",
     elif mood == "smile":
         d.arc(cam.box(hx-mw, my-mw*0.82, hx+mw, my+mw*0.30), 20, 160, fill=ink,
               width=max(2, int(cam.r(hr*0.045))))
+    elif mood == "wired":
+        d.ellipse(cam.box(hx-mw*0.42, my-mw*0.16, hx+mw*0.42, my+mw*0.42),
+                  fill=(58, 24, 28, alpha), outline=ink, width=max(1, int(cam.r(hr*0.026))))
     else:
         d.line([cam.p(hx-mw*0.72, my), cam.p(hx+mw*0.72, my)], fill=ink,
                width=max(2, int(cam.r(hr*0.045))))
@@ -194,7 +205,11 @@ class _Off:
     def box(self, x0, y0, x1, y1):
         a = self.p(x0, y0); b = self.p(x1, y1); return [a[0], a[1], b[0], b[1]]
 
-def draw_demon(im, d, cam, hip, h, pose, t=0.0, alpha=255, grin=1.0, flip=False):
+def draw_demon(im, d, cam, hip, h, pose, t=0.0, alpha=255, grin=1.0, flip=False, heat=1.0):
+    """heat — сила розового ореола. Он ДЫШИТ (22.10, слово пользователя: «ореол
+    прекрасный… если бы он менял яркость, чуть ярче, чуть тусклее») и, кроме
+    того, разгорается по ходу ролика: render3 поднимает heat от сцены к сцене,
+    от 0,9 в первом появлении до 1,4 в сцене срыва."""
     if alpha <= 6: return None
     sway = math.sin(t*0.62)*h*0.010
     hip = (hip[0]+sway, hip[1])
@@ -211,7 +226,7 @@ def draw_demon(im, d, cam, hip, h, pose, t=0.0, alpha=255, grin=1.0, flip=False)
                     alpha=255, stroke=h*0.030, ink=(255, 70, 150), face_on=False, flip=flip)
         lay = lay.filter(ImageFilter.GaussianBlur(cam.r(h*0.055)*SS))
         arr = np.asarray(lay).astype(np.float32)
-        arr[..., 3] *= 1.15*(alpha/255.0)
+        arr[..., 3] *= 1.15*(alpha/255.0)*heat*flicker(t, 0.73, 0.26, 0.62)
         arr[..., 3] = np.clip(arr[..., 3], 0, 255)
         im.alpha_composite(Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGBA"),
                            (int(X0*SS), int(Y0*SS)))
@@ -230,5 +245,6 @@ def draw_demon(im, d, cam, hip, h, pose, t=0.0, alpha=255, grin=1.0, flip=False)
         gw = hr*0.46*grin
         d.arc(cam.box(hc[0]-gw, hc[1]+hr*0.06, hc[0]+gw, hc[1]+hr*0.80), 20, 160,
               fill=pc, width=lw)
-        add_glow(im, *cam.p(hc[0], hc[1]+hr*0.40), cam.r(hr*0.9), MAG, 0.28*(alpha/255), 2.0)
+        add_glow(im, *cam.p(hc[0], hc[1]+hr*0.40), cam.r(hr*0.9), MAG,
+                 0.28*(alpha/255)*heat*flicker(t, 0.73, 0.26, 0.62), 2.0)
     return info
