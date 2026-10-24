@@ -145,8 +145,48 @@ jobs:
           for f in $(ls parts/part*.mp4 | sort); do echo "file '$PWD/$f'"; done > list.txt
           cat list.txt
           "$FF" -nostdin -hide_banner -loglevel error -f concat -safe 0 -i list.txt \
-                 -c copy "${{ needs.setup.outputs.name }}.mp4"
+                 -c copy "mute.mp4"
           ls -la *.mp4
+
+      # ЗВУК ПЕРЕЕХАЛ В ОБЛАКО 24.10 (прямое слово пользователя 23.10: на его
+      # машине не считается ничего). Музыка и эффекты лежат в приватном
+      # shortfilm-assets/audio рядом со шрифтами и забираются тем же ключом.
+      # Рецепт — прежний, из cloud/sound.sh, отметки для ролика 186 с.
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.ASSETS_KEY }}
+      - run: |
+          git clone --depth 1 git@github.com:${{ github.repository_owner }}/shortfilm-assets.git /tmp/assets
+          ls -la /tmp/assets/audio
+
+      - name: Подмешать музыку и звуки
+        run: |
+          IN=mute.mp4
+          OUT="${{ needs.setup.outputs.name }}.mp4"
+          A=/tmp/assets/audio
+          DUR=$(python3 -c "print(${{ needs.setup.outputs.frames }}/${{ needs.setup.outputs.fps }})")
+          FADE=4.5
+          FST=$(python3 -c "print(max(0.0, $DUR - $FADE))")
+          echo "длительность $DUR с, затухание с $FST с"
+          # ГОЧА: Golden Cage 110,8 с — короче тёмной части, поэтому зациклен
+          # входом (-stream_loop 3). Без этого amix обрезал ролик до 110,8 с.
+          "$FF" -nostdin -hide_banner -loglevel error -y \
+            -i "$IN" -stream_loop 3 -i "$A/golden_cage.mp3" -i "$A/borderless.mp3" \
+            -stream_loop 20 -i "$A/clock_tick.mp3" -i "$A/mouse_click.mp3" -i "$A/whoosh.mp3" \
+            -filter_complex "
+              [1:a]atrim=0:170,asetpts=N/SR/TB,afade=t=in:st=0:d=2,
+                   afade=t=out:st=166:d=4,volume=0.42[m1];
+              [2:a]atrim=0:20,asetpts=N/SR/TB,adelay=168000|168000,
+                   afade=t=in:st=168:d=2.5,volume=0.50[m2];
+              [3:a]atrim=0:114,asetpts=N/SR/TB,adelay=18000|18000,volume=0.30,
+                   afade=t=out:st=128:d=4[tick];
+              [4:a]adelay=133600|133600,volume=0.85[clk];
+              [5:a]adelay=148900|148900,volume=0.55[rst];
+              [m1][m2][tick][clk][rst]amix=inputs=5:duration=longest:normalize=0,
+                apad,atrim=0:$DUR,loudnorm=I=-14:TP=-1.5:LRA=11,
+                afade=t=out:st=$FST:d=$FADE[a]" \
+            -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k "$OUT"
+          ls -la "$OUT"
 
       - name: Выложить релизом
         env:
@@ -155,7 +195,7 @@ jobs:
           tag="film-${{ needs.setup.outputs.name }}-${{ github.run_id }}"
           gh release create "$tag" "${{ needs.setup.outputs.name }}.mp4" \
              -R "${{ github.repository }}" -t "$tag" \
-             -n "Немой мастер. Звук подмешивается на машине пользователя."
+             -n "Готовый мастер со звуком: музыка, тиканье, щелчок, шорох, затухание 4,5 с."
           echo "релиз: $tag"
 
   # -------------------------------------------------------------- предпросмотр

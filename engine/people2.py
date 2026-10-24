@@ -201,11 +201,14 @@ def draw_person(im, d, cam, hip, h, pose, t=0.0, seed=0.0, skin=CREAM,
         # 1.4 — волосы до плеч. Чёлка обязательна: без неё причёска читается
         # как шапка (замечание пользователя 22.10: «на девушку не похожа»).
         hl = hair_len
+        # ГОЧА 24.10 (лист предпросмотра v11): широкие короткие пряди по бокам
+        # головы читались как собачьи уши. Прядь должна начинаться у виска,
+        # идти ВПЛОТНУЮ к голове и быть заметно уже, чем сама голова.
         for sg in (-1, 1):
-            capsule(d, cam, (head_c[0]+sg*hr*0.96, head_c[1]-hr*0.20),
-                    (head_c[0]+sg*hr*0.86, head_c[1]+hr*hl), hr*0.21+stroke*0.8, ink, alpha)
-            capsule(d, cam, (head_c[0]+sg*hr*0.96, head_c[1]-hr*0.20),
-                    (head_c[0]+sg*hr*0.86, head_c[1]+hr*hl), hr*0.21, hair, alpha)
+            capsule(d, cam, (head_c[0]+sg*hr*0.88, head_c[1]-hr*0.06),
+                    (head_c[0]+sg*hr*0.74, head_c[1]+hr*hl), hr*0.15+stroke*0.8, ink, alpha)
+            capsule(d, cam, (head_c[0]+sg*hr*0.88, head_c[1]-hr*0.06),
+                    (head_c[0]+sg*hr*0.74, head_c[1]+hr*hl), hr*0.15, hair, alpha)
         ellipse_at(d, cam, (head_c[0], head_c[1]-hr*0.30), hr*1.10+stroke*0.8,
                    hr*0.90+stroke*0.8, ink, alpha)
         ellipse_at(d, cam, (head_c[0], head_c[1]-hr*0.30), hr*1.10, hr*0.90, hair, alpha)

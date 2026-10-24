@@ -72,7 +72,7 @@ HERO  = dict(outfit="hoodie", cloth=(118, 128, 148))
 # был написан ещё 22.10, но в раскадровку не подключён: длинные волосы с чёлкой
 # (hair_len), узкий силуэт (slim) и юбка (skirt) включаются только здесь.
 GIRL  = dict(outfit="jacket", cloth=(96, 110, 128), hair=(38, 34, 40),
-             lashes=True, scarf=(206, 84, 94), hair_len=1.32, slim=0.84,
+             lashes=True, scarf=(206, 84, 94), hair_len=1.58, slim=0.84,
              skirt=(74, 86, 108))
 GUY   = dict(outfit="jacket", cloth=(104, 118, 132))
 FRIEND = dict(outfit="jacket", cloth=(92, 118, 102), scarf=(196, 150, 86))
@@ -514,7 +514,7 @@ def frame(i):
             # одеяло шло от x=312, а голова в новой позе стоит на 437..545.
             # Теперь под головой подушка (рисуется ДО фигуры), а одеяло
             # начинается правее головы и накрывает только тело и ноги.
-            rrect(d, cam, (396, 764, 580, 850), 26, (44, 42, 52), LINE, 3.4)
+            rrect(d, cam, (392, 758, 584, 852), 28, (64, 62, 76), LINE, 3.4)
             draw_person(im, d, cam, (640, 764), 360, "lie", t=t, mood="tired",
                         face_on=True, **HERO)
             rrect(d, cam, (566, 748, 1140, 886), 18, (50, 40, 34), LINE, 4)
