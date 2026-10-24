@@ -259,6 +259,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="thumb-${{ needs.setup.outputs.name }}-${{ github.run_id }}"
-          gh release create "$tag" engine/thumb/thumb.jpg \
+          gh release create "$tag" engine/thumb/thumb*.jpg \
              -R "${{ github.repository }}" -t "$tag" -n "Обложка для YouTube."
           echo "релиз: $tag"

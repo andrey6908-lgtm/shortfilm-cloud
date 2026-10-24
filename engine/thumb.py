@@ -15,7 +15,7 @@ import os, sys, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from film import *
 from people2 import *
-from PIL import Image
+from PIL import Image, ImageDraw
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else "thumb"
 os.makedirs(OUT, exist_ok=True)
@@ -162,5 +162,95 @@ def build():
     print("обложка готова:", p)
 
 
+# ---------------------------------------------------------------- вариант 2
+# Заказ 24.10: «второй вариант обложки, лучше чем первый». Что не работало в
+# первом: три головы почти одного размера (нет фокуса), герой спокоен вместо
+# тревоги, друг справа мелкий и теряется, половина кадра пустая.
+# Второй вариант: вопрос ДВУМЯ строками в левой трети, лицо героя огромное
+# справа и подсвечено снизу телефоном, тёплая жизнь — круглой врезкой в углу,
+# лента уходит вниз колонной. Крупность разная, взгляд идёт текст → лицо → врезка.
+
+def medallion(im, cx, cy, r):
+    """Круглая врезка с тёплой сценой: друг за столиком и чашка.
+
+    Рисуется отдельным слоем и обрезается круглой маской — иначе фигура
+    вылезает за край. Слой полноэкранный, но он здесь ОДИН и только на
+    обложке; в фильме полноэкранные слои запрещены по памяти.
+    """
+    lay = Image.new("RGBA", (SW, SH), (0, 0, 0, 0))
+    ld = SDraw(lay, "RGBA")
+    ld.ellipse([cx-r, cy-r, cx+r, cy+r], fill=(58, 34, 16, 255))
+    add_glow(lay, cx, cy-r*0.25, r*1.5, AMBER, 0.75, 1.8)
+    cam = Cam(1.0, W/2, H/2)
+    h, hipy = put(head_y=cy-r*0.02, hr=r*0.40)
+    draw_person(lay, ld, cam, (cx+r*0.16, hipy), h, "sit_chair", t=0.4, seed=0.7,
+                mood="smile", look=-0.5, skin=(222, 204, 182),
+                cloth=(92, 118, 102), lit=0.9, outfit="jacket", scarf=(196, 150, 86))
+    ld.rounded_rectangle([cx-r*1.1, cy+r*0.52, cx+r*1.1, cy+r*0.70], radius=10,
+                         fill=(104, 66, 38, 255), outline=(46, 29, 17, 255), width=5)
+    cup(ld, cx-r*0.46, cy+r*0.40, r*0.17)
+    mask = Image.new("L", (SW, SH), 0)
+    ImageDraw.Draw(mask).ellipse([(cx-r)*SS, (cy-r)*SS, (cx+r)*SS, (cy+r)*SS], fill=255)
+    im.paste(lay, (0, 0), mask)
+    d2 = SDraw(im, "RGBA")
+    d2.ellipse([cx-r, cy-r, cx+r, cy+r], outline=(255, 206, 128, 255), width=9)
+
+
+def build2():
+    im, d = new_frame((8, 10, 18, 255))
+    # фон: холодная ночь, тёплый клин из правого верхнего угла
+    for i in range(96):
+        k = i/95.0
+        c = mix((11, 14, 24), (26, 20, 20), clamp((k-0.52)/0.42))
+        d.rectangle([W*k, 0, W*(k+1/95.0)+2, H], fill=c + (255,))
+    add_glow(im, W*0.76, H*0.30, 900, (120, 80, 30), 0.40, 2.0)
+    add_glow(im, W*0.30, H*0.86, 820, (60, 100, 220), 0.30, 2.1)
+
+    # лента: колонна карточек уходит вниз вдоль левого края
+    for k in range(7):
+        q = k/6.0
+        w = lerp(300, 150, q); hgt = lerp(150, 78, q)
+        x = lerp(196, 118, q); y = lerp(1010, 640, q)
+        a = int(lerp(255, 70, q))
+        add_glow(im, x, y, w*1.5, (105, 160, 255), 0.30*(1-q*0.55), 2.0)
+        d.rounded_rectangle([x-w/2, y-hgt/2, x+w/2, y+hgt/2], radius=w*0.12,
+                            fill=(138, 182, 255, a), outline=(10, 14, 24, 255),
+                            width=max(3, int(8*(1-q*0.6))))
+        for r in range(2):
+            ry = y - hgt*0.16 + r*hgt*0.30
+            d.rounded_rectangle([x-w*0.30, ry-hgt*0.07, x+w*0.30, ry+hgt*0.07],
+                                radius=hgt*0.06, fill=(26, 38, 70, a))
+
+    cam = Cam(1.0, W/2, H/2)
+
+    # демон нависает над героем, ореол на максимуме
+    h, hipy = put(head_y=330, hr=118)
+    draw_demon(im, d, cam, (1118, hipy), h, "stand", t=1.1, heat=1.6)
+
+    # герой: голова во весь правый край, свет телефона снизу
+    h, hipy = put(head_y=622, hr=268)
+    inf = draw_person(im, d, cam, (1392, hipy), h, "sit_bed", t=0.0,
+                      mood="wired", look=-0.18, lit=1.0,
+                      outfit="crew", cloth=(118, 128, 148))
+    hx, hy = inf["head"]; hr = inf["hr"]
+    add_glow(im, hx, hy + hr*1.35, hr*2.2, (120, 175, 255), 0.70, 1.9)
+    phone_in_hand(im, d, hx - hr*0.06, hy + hr*2.16, hr*0.80)
+
+    # тёплая жизнь — круглой врезкой, та, на которую он не поднимает глаз
+    medallion(im, 1686, 232, 196)
+
+    # вопрос двумя строками в левой трети: читается даже с ноготь
+    big_text(d, "3 000 НОЧЕЙ", 560, 392, 148, fill=(255, 255, 255), rw=13)
+    big_text(d, "ИЛИ", 300, 566, 148, fill=(255, 206, 86), rw=13)
+    big_text(d, "1 ДЕНЬ?", 680, 566, 148, fill=(255, 255, 255), rw=13)
+
+    im.alpha_composite(vignette(), (0, 0))
+    out = im.convert("RGB").resize((W, H), Image.LANCZOS)
+    p = os.path.join(OUT, "thumb2.jpg")
+    out.save(p, quality=95)
+    print("обложка, вариант 2:", p)
+
+
 if __name__ == "__main__":
     build()
+    build2()
