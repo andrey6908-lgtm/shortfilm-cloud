@@ -44,6 +44,30 @@ def new_frame(bg=(6, 7, 10, 255)):
 def paste(im, layer, xy):
     """Композит слоя, координаты логические."""
     im.alpha_composite(layer, (int(xy[0]*SS), int(xy[1]*SS)))
+
+def text_band(y0, y1):
+    """Полоса-слой во всю ширину кадра под текст, в логических координатах.
+
+    ЗАЧЕМ (замечание пользователя 22.10 по v10: подписи всплывают «полыми
+    буквами»): тень под текстом набиралась в шесть проходов, и на малой
+    прозрачности шесть полупрозрачных слоёв тени складывались в плотный
+    контур БЫСТРЕЕ, чем набирала плотность сама заливка буквы. Лечение —
+    рисовать надпись целиком при полной альфе в отдельный слой и накладывать
+    слой с нужной прозрачностью: соотношение тени и буквы больше не плывёт.
+    Слой — узкая полоса, а не весь кадр: полноэкранные слои по 33 МБ
+    запрещены по памяти (см. раздел про суперсэмплинг).
+    """
+    hh = max(1, int(round((y1 - y0)*SS)))
+    im = Image.new("RGBA", (SW, hh), (0, 0, 0, 0))
+    return im, SDraw(im, "RGBA")
+
+def put_band(im, layer, y0, alpha):
+    """Наложить полосу-слой с общей прозрачностью."""
+    if alpha <= 2: return
+    if alpha < 255:
+        layer = layer.copy()
+        layer.putalpha(layer.getchannel("A").point(lambda v: (v*int(alpha))//255))
+    im.alpha_composite(layer, (0, int(round(y0*SS))))
 FD = os.environ.get("SHORTFILM_FONTS", "/mnt/c/Windows/Fonts/")
 if not FD.endswith("/"): FD += "/"
 def font(n, s): return ImageFont.truetype(FD + n, max(1, int(round(s*SS))))

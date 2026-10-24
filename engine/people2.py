@@ -41,8 +41,12 @@ POSES = {
                   ua_l=104, fa_l=78, ua_r=74, fa_r=38, lean=-4, head=2, hip_y=0.0),
  "sit_chair":dict(thigh_l=6,  shin_l=88, thigh_r=2,  shin_r=90,
                   ua_l=108, fa_l=36, ua_r=72, fa_r=144, lean=-3, head=0, hip_y=0.0),
+ # ГОЧА 22.10: при head=-78 голова уходила НИЖЕ плеч (y 802 против 750) и
+ # целиком скрывалась под одеялом, а левая рука (ua 150 / fa 196) ложилась
+ # поверх лица. Теперь голова продолжает корпус влево — лежит на подушке, —
+ # а обе руки вытянуты вдоль тела к ногам, под одеяло.
  "lie":      dict(thigh_l=4,  shin_l=6,  thigh_r=-2, shin_r=2,
-                  ua_l=150, fa_l=196, ua_r=30, fa_r=-16, lean=-82, head=-78, hip_y=0.0),
+                  ua_l=8,   fa_l=-4,  ua_r=-8, fa_r=4,  lean=-82, head=-4, hip_y=0.0),
  "slump":    dict(thigh_l=22, shin_l=34, thigh_r=18, shin_r=30,
                   ua_l=104, fa_l=92, ua_r=76, fa_r=88, lean=10, head=12, hip_y=0.02),
  "reach":    dict(thigh_l=92, shin_l=90, thigh_r=88, shin_r=90,
@@ -79,7 +83,8 @@ def walk_pose(phase, base="stand"):
 def draw_person(im, d, cam, hip, h, pose, t=0.0, seed=0.0, skin=CREAM,
                 mood="neutral", look=0.0, alpha=255, stroke=None, lit=0.0,
                 flip=False, ink=OUTLINE, face_on=True, lashes=False, hair=None,
-                cloth=None, outfit=None, scarf=None):
+                cloth=None, outfit=None, scarf=None, hair_len=0.62, slim=1.0,
+                skirt=None):
     """hip — точка таза в мировых координатах, h — рост фигуры.
 
     outfit (22.10, третий разрыв с оригиналом): раньше тело было залито одним
@@ -96,7 +101,7 @@ def draw_person(im, d, cam, hip, h, pose, t=0.0, seed=0.0, skin=CREAM,
     L_th, L_sh = h*0.200, h*0.188
     L_ua, L_fa = h*0.152, h*0.142
     r_leg, r_arm = h*0.044, h*0.036
-    tw, tl = h*0.118, h*0.265
+    tw, tl = h*0.118*slim, h*0.265   # slim < 1 — фигура уже в плечах и бёдрах
     hr = h*0.150
 
     lean = pose["lean"]*f
@@ -148,25 +153,18 @@ def draw_person(im, d, cam, hip, h, pose, t=0.0, seed=0.0, skin=CREAM,
     paint(head, stroke, ink, alpha)
     paint(head, 0, skin, alpha)
 
-    if outfit:               # горловина поверх шеи, под руками
-        nx, ny = sh_c[0], sh_c[1] - h*0.012
-        if outfit in ("hoodie", "crew"):
-            # "crew" — та же вещь без капюшона: ровная горловина и всё. Нужна
-            # для КРУПНЫХ планов, где капюшон читается как уши, а косой
-            # воротник куртки — как клыки под подбородком (обложка, 22.10).
-            # ГОЧА 22.10: вертикальные шнурки вместе с подолом и карманом
-            # читались как ЛЯМКИ — фигура выглядела в рабочем комбинезоне.
-            # Осталась только широкая горловина: её хватает, чтобы капюшон
-            # прочитался, и ничего вертикального на груди больше нет.
-            capsule(d, cam, (nx-tw*1.02, ny+h*0.020), (nx+tw*1.02, ny+h*0.020),
-                    h*0.034+stroke*0.8, ink, alpha)
-            capsule(d, cam, (nx-tw*1.02, ny+h*0.020), (nx+tw*1.02, ny+h*0.020),
-                    h*0.034, mix(body_col, (255, 255, 255), 0.12), alpha)
-        else:
-            for sg in (-1, 1):
-                capsule(d, cam, (nx+sg*tw*0.12, ny+h*0.010),
-                        (nx+sg*tw*0.78, ny+h*0.052), h*0.016,
-                        mix(body_col, (255, 255, 255), 0.12), alpha)
+    # ВОРОТНИК УБРАН 22.10 по прямому слову пользователя: «какой-то странный
+    # воротник у чела, не нужен он такой». Ни широкой горловины, ни косых
+    # отворотов куртки — у шеи больше ничего не рисуется.
+
+    if skirt:
+        # Трапеция от таза — единственная деталь, которая на блобе мгновенно
+        # читается как женский силуэт. Рисуется до рук, поверх ног.
+        pts = [(hx-tw*0.92, hy0-h*0.010), (hx+tw*0.92, hy0-h*0.010),
+               (hx+tw*1.62, hy0+h*0.150), (hx-tw*1.62, hy0+h*0.150)]
+        d.polygon([cam.p(*q) for q in pts], fill=ink + (alpha,))
+        pts2 = [(x - (stroke*0.9 if x < hx else -stroke*0.9), y) for x, y in pts]
+        d.polygon([cam.p(*q) for q in pts2], fill=skirt + (alpha,))
 
     if scarf:
         sx, sy = sh_c[0], sh_c[1] + h*0.020
@@ -192,18 +190,28 @@ def draw_person(im, d, cam, hip, h, pose, t=0.0, seed=0.0, skin=CREAM,
             rr = seg[2]*0.74
             ellipse_at(d, cam, seg[1], rr+stroke*0.9, rr*0.94+stroke*0.9, ink, alpha)
             ellipse_at(d, cam, seg[1], rr, rr*0.94, mix(skin, (0, 0, 0), 0.08), alpha)
-        # подол
-        capsule(d, cam, (hx-tw*0.96, hy0+h*0.034), (hx+tw*0.96, hy0+h*0.034),
-                h*0.013, mix(body_col, (0, 0, 0), 0.26), alpha)
-        if outfit == "hoodie":   # карман-кенгуру: ниже пояса и уже плеч
-            capsule(d, cam, (hx-tw*0.52, hy0-h*0.002), (hx+tw*0.52, hy0-h*0.002),
-                    h*0.020, mix(body_col, (0, 0, 0), 0.16), alpha)
+        # ГОЧА 22.10 (пользователь показал кадр): подол шириной tw*0.96 выходил
+        # ЗА силуэт и ложился поперёк кистей — в кадре это читалось как палка
+        # или турник в руках. Карман на животе давал вторую такую же полосу.
+        # Оба убраны: одежду держат горловина, манжеты и цвет, а любая
+        # горизонтальная линия на уровне рук превращается в посторонний предмет.
+        pass
     if hair:
-        ellipse_at(d, cam, (head_c[0], head_c[1]-hr*0.28), hr*1.06, hr*0.86, ink, alpha)
-        ellipse_at(d, cam, (head_c[0], head_c[1]-hr*0.30), hr*1.0, hr*0.80, hair, alpha)
+        # hair_len — до какой точки ниже головы спускаются пряди. 0.6 — каре,
+        # 1.4 — волосы до плеч. Чёлка обязательна: без неё причёска читается
+        # как шапка (замечание пользователя 22.10: «на девушку не похожа»).
+        hl = hair_len
         for sg in (-1, 1):
-            capsule(d, cam, (head_c[0]+sg*hr*0.92, head_c[1]-hr*0.30),
-                    (head_c[0]+sg*hr*0.92, head_c[1]+hr*0.62), hr*0.16, hair, alpha)
+            capsule(d, cam, (head_c[0]+sg*hr*0.96, head_c[1]-hr*0.20),
+                    (head_c[0]+sg*hr*0.86, head_c[1]+hr*hl), hr*0.21+stroke*0.8, ink, alpha)
+            capsule(d, cam, (head_c[0]+sg*hr*0.96, head_c[1]-hr*0.20),
+                    (head_c[0]+sg*hr*0.86, head_c[1]+hr*hl), hr*0.21, hair, alpha)
+        ellipse_at(d, cam, (head_c[0], head_c[1]-hr*0.30), hr*1.10+stroke*0.8,
+                   hr*0.90+stroke*0.8, ink, alpha)
+        ellipse_at(d, cam, (head_c[0], head_c[1]-hr*0.30), hr*1.10, hr*0.90, hair, alpha)
+        # чёлка — скошенная прядь на лбу
+        capsule(d, cam, (head_c[0]-hr*0.86, head_c[1]-hr*0.30),
+                (head_c[0]+hr*0.46, head_c[1]-hr*0.46), hr*0.30, hair, alpha)
     if lit > 0:
         soft_ellipse(im, *cam.p(head_c[0], head_c[1]+hr*0.2), cam.r(hr*1.5), cam.r(hr*1.6),
                      (150, 180, 255), 0.22*lit, 1.6)
@@ -259,9 +267,18 @@ def face(d, cam, hx, hy, hr, t=0.0, seed=0.0, alpha=255, mood="neutral",
         d.line([cam.p(*inner), cam.p(*outer)], fill=ink, width=max(2, int(cam.r(hr*0.058))))
     my, mw = hy + hr*0.46, hr*0.22
     if mood == "talk":
-        d.ellipse(cam.box(hx-mw*0.8, my-mw*0.5, hx+mw*0.8, my+mw*0.8), fill=(64, 26, 30, alpha))
-        d.ellipse(cam.box(hx-mw*0.8, my-mw*0.5, hx+mw*0.8, my+mw*0.8), outline=ink,
-                  width=max(1, int(cam.r(hr*0.030))))
+        # ГОЧА 22.10 (прямое слово пользователя по v10): круглый тёмный овал
+        # 1,6×1,3 посреди лица читался как «нос клоуна». Открытый рот должен
+        # быть заметно ШИРЕ, чем выше, стоять ниже середины лица и держаться
+        # на тонкой обводке — тогда он читается как речь, а не как нашлёпка.
+        mh = mw*0.46
+        box = (hx-mw*0.92, my-mh*0.40, hx+mw*0.92, my+mh*1.00)
+        d.ellipse(cam.box(*box), fill=(58, 24, 28, alpha))
+        d.ellipse(cam.box(*box), outline=ink, width=max(1, int(cam.r(hr*0.022))))
+        # нижняя губа — светлый блик, иначе рот выглядит дырой
+        d.arc(cam.box(hx-mw*0.70, my-mh*0.10, hx+mw*0.70, my+mh*1.06), 24, 156,
+              fill=mix(skin, (0, 0, 0), 0.30) + (alpha,),
+              width=max(1, int(cam.r(hr*0.018))))
     elif mood == "sad":
         d.arc(cam.box(hx-mw, my-mw*0.18, hx+mw, my+mw*0.82), 200, 340, fill=ink,
               width=max(2, int(cam.r(hr*0.045))))

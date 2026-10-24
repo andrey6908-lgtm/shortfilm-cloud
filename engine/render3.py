@@ -68,10 +68,23 @@ def fade(t, a, b, inn=0.8, out=0.8):
 # Одежда (22.10). Герой во всех сценах в одном худи, иначе он не узнаётся как
 # один человек. Второстепенные — в куртках, девушка со своим характером.
 HERO  = dict(outfit="hoodie", cloth=(118, 128, 148))
+# Девушка (пункт 3 замечаний по v10: «не похожа на девушку»). Код в people2.py
+# был написан ещё 22.10, но в раскадровку не подключён: длинные волосы с чёлкой
+# (hair_len), узкий силуэт (slim) и юбка (skirt) включаются только здесь.
 GIRL  = dict(outfit="jacket", cloth=(96, 110, 128), hair=(38, 34, 40),
-             lashes=True, scarf=(206, 84, 94))
+             lashes=True, scarf=(206, 84, 94), hair_len=1.32, slim=0.84,
+             skirt=(74, 86, 108))
 GUY   = dict(outfit="jacket", cloth=(104, 118, 132))
 FRIEND = dict(outfit="jacket", cloth=(92, 118, 102), scarf=(196, 150, 86))
+
+def talks(l, phase=0.0):
+    """Губы в разговоре.
+
+    Пункт 4 замечаний по v10: рот открывался раз в пять секунд на две с
+    лишним — это читалось не как речь, а как мигающая нашлёпка на лице.
+    Теперь размыкание короткое и частое: примерно треть времени открыт.
+    """
+    return "talk" if ((l*1.7 + phase) % 2.0) < 0.74 else "smile"
 
 BOT = 930
 def narr(d, parts, alpha, im=None, y=BOT, size=50):
@@ -88,6 +101,19 @@ def narr(d, parts, alpha, im=None, y=BOT, size=50):
     f = FN(size)
     tot = sum(d.textlength(p[0], font=f) for p in parts)
     x = W/2 - tot/2
+    if im is not None:
+        # Пункт 6 замечаний по v10 («подписи всплывают полыми буквами»):
+        # вся подпись рисуется при ПОЛНОЙ плотности в отдельную полосу-слой,
+        # и уже слой накладывается с нужной прозрачностью. Тень и заливка
+        # набираются вместе, буквы не выглядят контурными.
+        top, bot = y - size*1.25, y + size*1.05
+        layer, ld = text_band(top, bot)
+        _narr_paint(ld, parts, f, x, y - top, size, 255)
+        put_band(im, layer, top, alpha)
+        return
+    _narr_paint(d, parts, f, x, y, size, alpha)
+
+def _narr_paint(d, parts, f, x, y, size, alpha):
     for txt, hl in parts:
         w = d.textlength(txt, font=f)
         if hl:
@@ -278,7 +304,7 @@ def frame(i):
 
     if inside(t, "cold"):
         narr(d, [("Он открыл ленту  ", False), ("  на минуту.  ", True)],
-             fade(t, 1.0, 6.4, 0.9, 0.8), y=H/2)
+             fade(t, 1.0, 6.4, 0.9, 0.8), im, y=H/2)
 
     elif inside(t, "street1"):
         l = lt(t, "street1")
@@ -287,9 +313,9 @@ def frame(i):
         walk = -160 + l*58
         ph = l*3.1
         draw_person(im, d, cam, (700+walk, 700), 430, walk_pose(ph), t=t, seed=0.0,
-                    mood="smile" if (l % 5) > 2.2 else "talk", look=0.5, **HERO)
+                    mood=talks(l, 1.0), look=0.5, **HERO)
         draw_person(im, d, cam, (980+walk, 700), 418, walk_pose(ph+2.9), t=t, seed=0.6,
-                    mood="talk" if (l % 5) > 2.2 else "smile", look=-0.5, skin=SKIN2,
+                    mood=talks(l), look=-0.5, skin=SKIN2,
                     **GIRL)
         narr(d, [("Раньше вечер заканчивался разговором.", False)],
              fade(t, 9.0, 20.5, 0.9, 0.9), im)
@@ -380,7 +406,7 @@ def frame(i):
         bus_stop(d, cam, 1460)
         draw_person(im, d, cam, (1420, 700), 400, "stand", t=t, seed=1.2, mood="smile",
                     **GIRL, look=-0.4, skin=SKIN2)
-        draw_person(im, d, cam, (1620, 700), 392, "stand", t=t, seed=1.7, mood="talk",
+        draw_person(im, d, cam, (1620, 700), 392, "stand", t=t, seed=1.7, mood=talks(l, 0.4),
                     **GUY, look=0.4, skin=(234, 222, 206))
         walk = -260 + l*74
         draw_person(im, d, cam, (560+walk, 712), 430, walk_pose(l*2.6), t=t, seed=0.0,
@@ -484,9 +510,14 @@ def frame(i):
                 lamp=0.5 if night == 30 else 0.0, clock_text=clk)
         draw_demon(im, d, cam, (1150, 846), 462, "stand", t=t, alpha=dal, heat=0.8)
         if night == 30:
-            draw_person(im, d, cam, (640, 764), 360, "lie", t=t, mood="neutral",
+            # Пункт 5 замечаний по v10: герой лежал целиком ПОД одеялом —
+            # одеяло шло от x=312, а голова в новой позе стоит на 437..545.
+            # Теперь под головой подушка (рисуется ДО фигуры), а одеяло
+            # начинается правее головы и накрывает только тело и ноги.
+            rrect(d, cam, (396, 764, 580, 850), 26, (44, 42, 52), LINE, 3.4)
+            draw_person(im, d, cam, (640, 764), 360, "lie", t=t, mood="tired",
                         face_on=True, **HERO)
-            rrect(d, cam, (312, 742, 1140, 886), 18, (50, 40, 34), LINE, 4)
+            rrect(d, cam, (566, 748, 1140, 886), 18, (50, 40, 34), LINE, 4)
         else:
             draw_person(im, d, cam, (700, 790), 430, "sit_bed", t=t, mood="neutral", **HERO)
             bed_cover(d, cam)
@@ -497,24 +528,28 @@ def frame(i):
         cam = Cam(lerp(1.02, 1.08, smoother(l/8)), 975, lerp(612, 600, smoother(l/8)))
         cafe_morning(im, d, cam, t)
         draw_person(im, d, cam, (796, 846), 460, "sit_chair", t=t, seed=0.0,
-                    mood="smile" if (l % 4) > 1.8 else "talk", look=0.6, lit=0.7, **HERO)
+                    mood=talks(l, 1.1), look=0.6, lit=0.7, **HERO)
         draw_person(im, d, cam, (1168, 846), 448, "sit_chair", t=t, seed=0.7,
-                    mood="talk" if (l % 4) > 1.8 else "smile", look=-0.6,
+                    mood=talks(l), look=-0.6,
                     skin=SKIN2, lit=0.7, **FRIEND)
         table_two(d, cam, t)
         cups_and_hands(d, cam, t)
         hud(d, 3341, 1, fade(t, 178.6, 186.2, 1.0, 0.01), strike=True, amber=True)
         a2 = fade(t, 180.4, 186.2, 0.9, 0.01)
         # Шторка под финальной надписью снята 22.10 — см. запрет в narr().
+        # Полые буквы (пункт 6) лечатся тем же слоем, что и подписи сцен.
+        ftop, fbot = BOT-118, BOT+62
+        flay, fd = text_band(ftop, fbot)
         for dx, dy in ((0, 3), (0, -2), (3, 1), (-3, 1)):
-            d.text((W/2+dx, BOT-58+dy), "Он пролистал три тысячи.", font=FN(42),
-                   fill=(0, 0, 0, int(a2*0.58)), anchor="mm")
-            d.text((W/2+dx, BOT+dy), "Он запомнил один день.", font=FNB(50),
-                   fill=(0, 0, 0, int(a2*0.62)), anchor="mm")
-        d.text((W/2, BOT-58), "Он пролистал три тысячи.", font=FN(42),
-               fill=(236, 238, 244, int(a2*0.92)), anchor="mm")
-        d.text((W/2, BOT), "Он запомнил один день.", font=FNB(50),
-               fill=(255, 255, 255, a2), anchor="mm")
+            fd.text((W/2+dx, BOT-58-ftop+dy), "Он пролистал три тысячи.", font=FN(42),
+                    fill=(0, 0, 0, 148), anchor="mm")
+            fd.text((W/2+dx, BOT-ftop+dy), "Он запомнил один день.", font=FNB(50),
+                    fill=(0, 0, 0, 158), anchor="mm")
+        fd.text((W/2, BOT-58-ftop), "Он пролистал три тысячи.", font=FN(42),
+                fill=(236, 238, 244, 235), anchor="mm")
+        fd.text((W/2, BOT-ftop), "Он запомнил один день.", font=FNB(50),
+                fill=(255, 255, 255, 255), anchor="mm")
+        put_band(im, flay, ftop, a2)
 
     else:
         a = fade(t, 186.6, 190, 1.0, 0.01)
