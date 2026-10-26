@@ -68,6 +68,7 @@ def put_band(im, layer, y0, alpha):
         layer = layer.copy()
         layer.putalpha(layer.getchannel("A").point(lambda v: (v*int(alpha))//255))
     im.alpha_composite(layer, (0, int(round(y0*SS))))
+import lang
 FD = os.environ.get("SHORTFILM_FONTS", "/mnt/c/Windows/Fonts/")
 if not FD.endswith("/"): FD += "/"
 def font(n, s): return ImageFont.truetype(FD + n, max(1, int(round(s*SS))))
@@ -75,7 +76,7 @@ FN  = lambda s: font("calibril.ttf", s)
 FNB = lambda s: font("calibri.ttf", s)
 FH  = lambda s: font("bahnschrift.ttf", s)
 FI  = lambda s: font("calibrili.ttf", s)
-FW  = lambda s: font("segoesc.ttf", s)   # почерк демона
+FW  = lambda s: font(lang.hand_font(), s)   # почерк демона, по языку (см. lang.HAND_FONT)
 
 CREAM = (239, 231, 219)
 INK   = (38, 34, 30)

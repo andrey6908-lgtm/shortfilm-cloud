@@ -113,6 +113,13 @@ PL = {
     "w5": "a nie mówiłem?",
 }
 
+# Шрифт почерка демона. По умолчанию Segoe Script, но в нём НЕТ румынской
+# буквы ț (проверено разбором cmap 26.10: ș есть, ț нет). Для румынского —
+# Segoe Print: тоже рукописный и держит весь набор. Проверять КАЖДЫЙ новый
+# язык разбором cmap, а не на глаз: отсутствующая буква рисуется пустым
+# квадратом и в логе рендера ничем себя не выдаёт.
+HAND_FONT = {"ro": "segoepr.ttf"}
+
 TABLES = {"ru": RU, "pl": PL}
 LANG = os.environ.get("SHORTFILM_LANG", "ru").lower()
 if LANG not in TABLES:
@@ -123,3 +130,8 @@ L = TABLES[LANG]
 _missing = [k for k in RU if k not in L]
 if _missing:
     raise SystemExit(f"в таблице '{LANG}' не хватает строк: {', '.join(_missing)}")
+
+
+def hand_font(default="segoesc.ttf"):
+    """Файл шрифта для почерка демона в текущем языке."""
+    return HAND_FONT.get(LANG, default)
