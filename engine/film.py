@@ -563,16 +563,21 @@ def vignette():
 # сохраняется, а отпечаток кадра меняется. Плюс своё зерно на каждую версию.
 # Выбор: SHORTFILM_TONE, по умолчанию берётся из SHORTFILM_LANG.
 TONE = os.environ.get("SHORTFILM_TONE", os.environ.get("SHORTFILM_LANG", "ru")).lower()
+# На канал: c' = 255*(c/255)^гамма * усиление. ПОДЪЁМА НЕТ СОЗНАТЕЛЬНО:
+# любой сдвиг нуля осветляет чисто чёрный фон спальни и кинополосы, а это
+# прямое нарушение канона (проверено листом 26.10 — чёрный уходил в фиолет).
+# Гамма двигает полутона и света, ноль остаётся нулём.
 _TONES = {
-    # на канал: c' = c*усиление + подъём
-    "ru": ((1.00, 0.0), (1.00, 0.0), (1.00, 0.0)),   # исходная, без коррекции
-    "pl": ((1.02, 6.0), (0.96, 0.0), (1.06, 8.0)),   # холоднее ночь, медовее свет
+    #       R (гамма, усиление)  G                   B
+    "ru": ((1.00, 1.00), (1.00, 1.00), (1.00, 1.00)),   # исходная, без коррекции
+    "pl": ((0.98, 1.03), (1.04, 0.95), (0.88, 1.09)),   # ночь холоднее, свет медовее
 }
 if TONE not in _TONES:
     raise SystemExit(f"неизвестная тональность SHORTFILM_TONE={TONE}, есть: {', '.join(_TONES)}")
 _GRADE = TONE != "ru"
-_LUT = np.stack([np.clip(np.arange(256, dtype=np.float32)*g + l, 0, 255).astype(np.uint8)
-                 for g, l in _TONES[TONE]], axis=1)          # (256, 3)
+_x = np.arange(256, dtype=np.float32) / 255.0
+_LUT = np.stack([np.clip((_x ** gam) * gain * 255.0, 0, 255).astype(np.uint8)
+                 for gam, gain in _TONES[TONE]], axis=1)     # (256, 3)
 _GRAIN_SEED = {"ru": 3, "pl": 11}.get(TONE, 3)
 
 _noise = np.random.default_rng(_GRAIN_SEED).integers(-5, 6, (H, W, 1), dtype=np.int16)
