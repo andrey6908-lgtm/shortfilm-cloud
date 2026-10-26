@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Локации в манере оригинала: чёрный фон, предметы светлыми контурами."""
+from lang import L
 import math, random
 import numpy as np
 from PIL import Image, ImageDraw
@@ -81,8 +82,9 @@ def line(d, cam, pts, col=LINE, lw=3.0, alpha=255, live=True):
     d.line([cam.p(*p) for p in pts], fill=col + (alpha,), width=_w(cam, lw), joint="curve")
 
 def bedroom(im, d, cam, t=0.0, warm=0.0, lamp=0.0, rain=True, clock_text="23:41",
-            phone_glow=None, calendar="ОКТ"):
+            phone_glow=None, calendar=None):
     """Спальня ночью. phone_glow=(x,y,r,strength)."""
+    if calendar is None: calendar = L["cal_month"]
     d.rectangle([0, 0, W, H], fill=mix(BG, (26, 17, 11), warm) + (255,))
     L  = mix(LINE,  (122, 92, 60), warm)
     L2 = mix(LINE2, (86, 62, 40), warm)

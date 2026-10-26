@@ -14,6 +14,7 @@
 import os, sys, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from film import *
+from lang import L
 from people2 import *
 from PIL import Image, ImageDraw
 
@@ -152,8 +153,8 @@ def build():
     hx, hy = inf["head"]; hr = inf["hr"]
     phone_in_hand(im, d, hx - hr*0.10, hy + hr*2.08, hr*0.92)
 
-    title(d, [("3 000", (255, 255, 255)), ("ИЛИ", (255, 206, 86)),
-              ("1?", (255, 255, 255))], 168, 180)
+    title(d, [(L["th_num"], (255, 255, 255)), (L["th_or"], (255, 206, 86)),
+              (L["th_one"], (255, 255, 255))], 168, 180)
 
     im.alpha_composite(vignette(), (0, 0))
     out = im.convert("RGB").resize((W, H), Image.LANCZOS)
@@ -256,8 +257,8 @@ def build2():
 
     # вторая строка длиннее первой: при одном размере она упиралась в левый
     # край кадра, поэтому она чуть мельче, а блок сдвинут от края.
-    row([("3 000 НОЧЕЙ", (255, 255, 255))], 596, 388, 146)
-    row([("ИЛИ", (255, 206, 86)), ("1 ДЕНЬ?", (255, 255, 255))], 596, 562, 132)
+    row([(L["th_nights"], (255, 255, 255))], 596, 388, 146)
+    row([(L["th_or"], (255, 206, 86)), (L["th_day"], (255, 255, 255))], 596, 562, 132)
 
     im.alpha_composite(vignette(), (0, 0))
     out = im.convert("RGB").resize((W, H), Image.LANCZOS)

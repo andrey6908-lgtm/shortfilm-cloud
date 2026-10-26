@@ -556,11 +556,33 @@ def vignette():
         _vig = Image.fromarray(v, "RGBA")
     return _vig
 
-_noise = np.random.default_rng(3).integers(-5, 6, (H, W, 1), dtype=np.int16)
+# ---------- тональность версии ----------
+# Языковые версии должны отличаться для YouTube не только текстом, но и
+# картинкой. Сдвиг делается ОДНОЙ цветокоррекцией здесь, а не правкой цветов
+# по всему коду: так канон (чёрный фон, контурная мебель, три палитры) целиком
+# сохраняется, а отпечаток кадра меняется. Плюс своё зерно на каждую версию.
+# Выбор: SHORTFILM_TONE, по умолчанию берётся из SHORTFILM_LANG.
+TONE = os.environ.get("SHORTFILM_TONE", os.environ.get("SHORTFILM_LANG", "ru")).lower()
+_TONES = {
+    # на канал: c' = c*усиление + подъём
+    "ru": ((1.00, 0.0), (1.00, 0.0), (1.00, 0.0)),   # исходная, без коррекции
+    "pl": ((1.02, 6.0), (0.96, 0.0), (1.06, 8.0)),   # холоднее ночь, медовее свет
+}
+if TONE not in _TONES:
+    raise SystemExit(f"неизвестная тональность SHORTFILM_TONE={TONE}, есть: {', '.join(_TONES)}")
+_GRADE = TONE != "ru"
+_LUT = np.stack([np.clip(np.arange(256, dtype=np.float32)*g + l, 0, 255).astype(np.uint8)
+                 for g, l in _TONES[TONE]], axis=1)          # (256, 3)
+_GRAIN_SEED = {"ru": 3, "pl": 11}.get(TONE, 3)
+
+_noise = np.random.default_rng(_GRAIN_SEED).integers(-5, 6, (H, W, 1), dtype=np.int16)
 def finish(im):
     im.alpha_composite(vignette(), (0, 0))
     small = im.convert("RGB").resize((W, H), Image.LANCZOS)
-    a = np.asarray(small).astype(np.int16) + _noise
+    a = np.asarray(small)
+    if _GRADE:
+        a = np.stack([_LUT[a[..., c], c] for c in range(3)], axis=-1)
+    a = a.astype(np.int16) + _noise
     return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8), "RGB")
 
 

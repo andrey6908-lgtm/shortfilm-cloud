@@ -2,6 +2,7 @@
 import sys, os, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from film import *
+from lang import L
 from rooms import *
 from people2 import *
 from PIL import Image
@@ -131,19 +132,19 @@ def hud(d, scrolled, known, alpha=255, strike=False, amber=False, night=None):
     fl, fv = FH(30), FH(42)
     x, y = 84, 128
     if night is not None:
-        d.text((x, y-12), f"НОЧЬ {night}", font=FH(60), fill=(234, 238, 246, alpha), anchor="lt")
-        d.text((x, y+62), "ЗАПОМНИЛ", font=fl, fill=(150, 156, 170, alpha), anchor="lt")
-        w2 = d.textlength("ЗАПОМНИЛ ", font=fl)
+        d.text((x, y-12), f"{L['hud_night']} {night}", font=FH(60), fill=(234, 238, 246, alpha), anchor="lt")
+        d.text((x, y+62), L["hud_known"], font=fl, fill=(150, 156, 170, alpha), anchor="lt")
+        w2 = d.textlength(L["hud_known"] + " ", font=fl)
         d.text((x+w2+10, y+56), "0", font=fv, fill=(235, 238, 245, alpha), anchor="lt")
         return
-    d.text((x, y), "ПРОЛИСТАНО", font=fl, fill=(150, 156, 170, alpha), anchor="lt")
-    w = d.textlength("ПРОЛИСТАНО ", font=fl)
+    d.text((x, y), L["hud_scrolled"], font=fl, fill=(150, 156, 170, alpha), anchor="lt")
+    w = d.textlength(L["hud_scrolled"] + " ", font=fl)
     d.text((x+w+10, y-6), f"{scrolled:,}".replace(",", " "), font=fv,
            fill=((136, 104, 122) if strike else MAG) + (alpha,), anchor="lt")
     if strike: d.line([(x-6, y+20), (x+w+168, y+20)], fill=(176, 104, 130, alpha), width=4)
     y2 = y+52
-    d.text((x, y2), "ЗАПОМНИЛ", font=fl, fill=(150, 156, 170, alpha), anchor="lt")
-    w2 = d.textlength("ЗАПОМНИЛ ", font=fl)
+    d.text((x, y2), L["hud_known"], font=fl, fill=(150, 156, 170, alpha), anchor="lt")
+    w2 = d.textlength(L["hud_known"] + " ", font=fl)
     d.text((x+w2+10, y2-6), str(known), font=fv,
            fill=(AMBER if amber else (235, 238, 245)) + (alpha,), anchor="lt")
 
@@ -303,7 +304,7 @@ def frame(i):
     im, d = new_frame((6, 7, 10, 255))
 
     if inside(t, "cold"):
-        narr(d, [("Он открыл ленту  ", False), ("  на минуту.  ", True)],
+        narr(d, [(L["n01a"], False), (L["n01b"], True)],
              fade(t, 1.0, 6.4, 0.9, 0.8), im, y=H/2)
 
     elif inside(t, "street1"):
@@ -317,7 +318,7 @@ def frame(i):
         draw_person(im, d, cam, (980+walk, 700), 418, walk_pose(ph+2.9), t=t, seed=0.6,
                     mood=talks(l), look=-0.5, skin=SKIN2,
                     **GIRL)
-        narr(d, [("Раньше вечер заканчивался разговором.", False)],
+        narr(d, [(L["n02"], False)],
              fade(t, 9.0, 20.5, 0.9, 0.9), im)
 
     elif inside(t, "bed1"):
@@ -332,13 +333,13 @@ def frame(i):
         bed_cover(d, cam)
         if l > 3.0: phone_at(im, d, cam, inf["hand_r"], 56, 1.0, l*1.2)
         hud(d, cnt(t, 26, 34, 2417, 2436), 0, fade(t, 25.4, 34, 1.0, 0.01))
-        narr(d, [("Это было в одиннадцать вечера.", False)], fade(t, 24.5, 32.6, 0.9, 0.9), im)
+        narr(d, [(L["n03"], False)], fade(t, 24.5, 32.6, 0.9, 0.9), im)
 
     elif inside(t, "feed"):
         l = lt(t, "feed")
         closeup_phone(im, d, near_cam(t), t, l*(1.2+l*1.1))
         hud(d, cnt(t, 34, 48, 2436, 2904), 0, 255)
-        narr(d, [("Лента не кончается. ", False), ("В этом вся идея.", False)],
+        narr(d, [(L["n04a"], False), (L["n04b"], False)],
              fade(t, 36.0, 46.6, 0.9, 0.8), im)
 
     elif inside(t, "appear"):
@@ -353,9 +354,9 @@ def frame(i):
         bed_cover(d, cam)
         phone_at(im, d, cam, inf["hand_r"], 56, 1.0, l*1.6)
         hud(d, cnt(t, 48, 62, 2904, 3015), 0, 255)
-        whisper(d, "ещё один.", t, 54.6, hold=3.4, size=50,
+        whisper(d, L["w1"], t, 54.6, hold=3.4, size=50,
                 at=demon_anchor(cam, dem) if dem else None)
-        narr(d, [("Сначала он выбирал, что смотреть.", False)], fade(t, 50.0, 60.6, 0.9, 0.9), im)
+        narr(d, [(L["n05"], False)], fade(t, 50.0, 60.6, 0.9, 0.9), im)
 
     elif inside(t, "deep"):
         l = lt(t, "deep")
@@ -369,9 +370,9 @@ def frame(i):
         bed_cover(d, cam)
         phone_at(im, d, cam, inf["hand_r"], 56, 0.9, l*2.0)
         hud(d, cnt(t, 62, 74, 3015, 3108), 0, 255)
-        whisper(d, "кто вообще спит в твоём возрасте?", t, 64.4, hold=3.6, size=46,
+        whisper(d, L["w2"], t, 64.4, hold=3.6, size=46,
                 at=demon_anchor(cam, dem) if dem else None, max_w=470)
-        narr(d, [("Потом выбирали за него.", False)], fade(t, 63.5, 72.6, 0.9, 0.8), im)
+        narr(d, [(L["n06"], False)], fade(t, 63.5, 72.6, 0.9, 0.8), im)
 
     elif inside(t, "lying"):
         l = lt(t, "lying")
@@ -383,9 +384,9 @@ def frame(i):
         bed_cover(d, cam)
         phone_at(im, d, cam, inf["hand_r"], 56, 1.0, l*2.2)
         hud(d, cnt(t, 74, 86, 3108, 3203), 0, 255)
-        whisper(d, "видишь? тебе никто и не нужен.", t, 76.6, hold=3.8, size=46,
+        whisper(d, L["w3"], t, 76.6, hold=3.8, size=46,
                 at=demon_anchor(cam, dem) if dem else None, max_w=470)
-        narr(d, [("Он перестал замечать, где кончается ночь.", False)],
+        narr(d, [(L["n07"], False)],
              fade(t, 75.5, 84.6, 0.9, 0.8), im)
 
     elif inside(t, "morning"):
@@ -397,7 +398,7 @@ def frame(i):
                     pose_mix("slump", "stand", k), t=t, mood="tired", look=-0.2, **HERO)
         if k < 0.25: bed_cover(d, cam)
         hud(d, 3203, 0, 255)
-        narr(d, [("Утро стало наказанием.", False)], fade(t, 88.0, 96.6, 0.9, 0.8), im)
+        narr(d, [(L["n08"], False)], fade(t, 88.0, 96.6, 0.9, 0.8), im)
 
     elif inside(t, "street2"):
         l = lt(t, "street2")
@@ -412,7 +413,7 @@ def frame(i):
         draw_person(im, d, cam, (560+walk, 712), 430, walk_pose(l*2.6), t=t, seed=0.0,
                     **HERO, mood="tired", look=0.0)
         hud(d, cnt(t, 98, 110, 3203, 3246), 0, 255)
-        narr(d, [("Он шёл мимо людей.", False)], fade(t, 100.0, 108.6, 0.9, 0.8), im)
+        narr(d, [(L["n09"], False)], fade(t, 100.0, 108.6, 0.9, 0.8), im)
 
     elif inside(t, "chat"):
         l = lt(t, "chat")
@@ -422,13 +423,13 @@ def frame(i):
         d.rounded_rectangle(cam.box(960-120, 452-262, 960+120, 452-202), radius=cam.r(14),
                             fill=(44, 48, 60, 255))
         d.ellipse(cam.box(960-106, 452-252, 960-70, 452-216), fill=(110, 118, 140, 255))
-        d.text(cam.p(960-58, 452-234), "Макс", font=FNB(int(26*s_)),
+        d.text(cam.p(960-58, 452-234), L["chat_name"], font=FNB(int(26*s_)),
                fill=(228, 232, 242, 255), anchor="lm")
         ox, oy = cam.p(960-112, 452-178)
         y = oy
-        if l > 1.0: y = bubble(d, "встретимся в субботу?", ox, y, False, fade(t, 111.5, 124, 0.7, 0.01), int(24*s_))
-        if l > 3.4: y = bubble(d, "не могу", ox+256*s_, y, True, fade(t, 113.8, 124, 0.7, 0.01), int(24*s_))
-        if l > 6.0: y = bubble(d, "ты норм?", ox, y, False, fade(t, 116.4, 124, 0.7, 0.01), int(24*s_))
+        if l > 1.0: y = bubble(d, L["chat_1"], ox, y, False, fade(t, 111.5, 124, 0.7, 0.01), int(24*s_))
+        if l > 3.4: y = bubble(d, L["chat_2"], ox+256*s_, y, True, fade(t, 113.8, 124, 0.7, 0.01), int(24*s_))
+        if l > 6.0: y = bubble(d, L["chat_3"], ox, y, False, fade(t, 116.4, 124, 0.7, 0.01), int(24*s_))
         if l > 8.6:
             aa = fade(t, 119.0, 124, 0.8, 0.01)
             for k in range(3):
@@ -436,7 +437,7 @@ def frame(i):
                 d.ellipse([ox+112*s_+k*24*s_-5*s_, y+24*s_-5*s_,
                            ox+112*s_+k*24*s_+5*s_, y+24*s_+5*s_], fill=(150, 158, 174, pa))
         hud(d, 3246, 0, 255)
-        narr(d, [("Друзья перестали спрашивать.", False)], fade(t, 112.5, 122.6, 0.9, 0.8), im)
+        narr(d, [(L["n10"], False)], fade(t, 112.5, 122.6, 0.9, 0.8), im)
 
     elif inside(t, "bottom"):
         l = lt(t, "bottom")
@@ -448,9 +449,9 @@ def frame(i):
         bed_cover(d, cam)
         phone_at(im, d, cam, inf["hand_r"], 56, 1.0, l*2.4)
         hud(d, cnt(t, 124, 136, 3246, 3290), 0, 255)
-        whisper(d, "остались только мы с тобой.", t, 126.6, hold=3.6, size=46,
+        whisper(d, L["w4"], t, 126.6, hold=3.6, size=46,
                 at=demon_anchor(cam, dem) if dem else None, max_w=470)
-        narr(d, [("Ждать стало нечего.", False)], fade(t, 126.0, 134.6, 0.9, 0.8), im)
+        narr(d, [(L["n11"], False)], fade(t, 126.0, 134.6, 0.9, 0.8), im)
 
     elif inside(t, "off"):
         l = lt(t, "off")
@@ -463,9 +464,9 @@ def frame(i):
             bed_cover(d, cam)
             phone_at(im, d, cam, inf["hand_r"], 56, off=True)
             hud(d, 3290, 0, 255)
-            narr(d, [("Он выключил телефон.", False)], fade(t, 137.4, 141.2, 0.9, 0.5), im)
+            narr(d, [(L["n12"], False)], fade(t, 137.4, 141.2, 0.9, 0.5), im)
         else:
-            d.text((W/2, H/2), "через двадцать минут…", font=FN(50),
+            d.text((W/2, H/2), L["n13"], font=FN(50),
                    fill=(214, 214, 220, fade(t, 142.2, 145.7, 0.9, 0.7)), anchor="mm")
 
     elif inside(t, "relapse"):
@@ -479,9 +480,9 @@ def frame(i):
         bed_cover(d, cam)
         phone_at(im, d, cam, inf["hand_r"], 56, 1.0, l*2.6)
         hud(d, cnt(t, 146, 153, 3290, 3341), 0, 255)
-        whisper(d, "я же говорил.", t, 147.0, hold=2.4, type_dur=1.1, size=50,
+        whisper(d, L["w5"], t, 147.0, hold=2.4, type_dur=1.1, size=50,
                 at=demon_anchor(cam, dem) if dem else None)
-        narr(d, [("Он включил его снова.", False)], fade(t, 147.4, 152.4, 0.9, 0.6), im)
+        narr(d, [(L["n14"], False)], fade(t, 147.4, 152.4, 0.9, 0.6), im)
 
     elif inside(t, "turn"):
         l = lt(t, "turn")
@@ -499,7 +500,7 @@ def frame(i):
             if l > 7.0: phone_at(im, d, cam, inf["hand_r"], 56, 0.9, 0)
         if k < 0.25: bed_cover(d, cam)
         hud(d, 3341, 0, 255)
-        narr(d, [("Потом он написал первым.", False)], fade(t, 157.0, 165.0, 0.9, 0.8), im)
+        narr(d, [(L["n15"], False)], fade(t, 157.0, 165.0, 0.9, 0.8), im)
 
     elif inside(t, "nights"):
         l = lt(t, "nights")
@@ -541,27 +542,27 @@ def frame(i):
         ftop, fbot = BOT-118, BOT+62
         flay, fd = text_band(ftop, fbot)
         for dx, dy in ((0, 3), (0, -2), (3, 1), (-3, 1)):
-            fd.text((W/2+dx, BOT-58-ftop+dy), "Он пролистал три тысячи.", font=FN(42),
+            fd.text((W/2+dx, BOT-58-ftop+dy), L["fin_1"], font=FN(42),
                     fill=(0, 0, 0, 148), anchor="mm")
-            fd.text((W/2+dx, BOT-ftop+dy), "Он запомнил один день.", font=FNB(50),
+            fd.text((W/2+dx, BOT-ftop+dy), L["fin_2"], font=FNB(50),
                     fill=(0, 0, 0, 158), anchor="mm")
-        fd.text((W/2, BOT-58-ftop), "Он пролистал три тысячи.", font=FN(42),
+        fd.text((W/2, BOT-58-ftop), L["fin_1"], font=FN(42),
                 fill=(236, 238, 244, 235), anchor="mm")
-        fd.text((W/2, BOT-ftop), "Он запомнил один день.", font=FNB(50),
+        fd.text((W/2, BOT-ftop), L["fin_2"], font=FNB(50),
                 fill=(255, 255, 255, 255), anchor="mm")
         put_band(im, flay, ftop, a2)
 
     else:
         a = fade(t, 186.6, 190, 1.0, 0.01)
-        d.text((W/2, 400), "ЛЕНТА", font=FH(92), fill=(238, 240, 246, a), anchor="mm")
-        d.text((W/2, 470), "vs", font=FN(40), fill=(150, 156, 170, a), anchor="mm")
-        d.text((W/2, 548), "ЖИЗНЬ.", font=FH(92), fill=(238, 240, 246, a), anchor="mm")
-        wl = d.textlength("ЖИЗНЬ.", font=FH(92))
+        d.text((W/2, 400), L["title_1"], font=FH(92), fill=(238, 240, 246, a), anchor="mm")
+        d.text((W/2, 470), L["title_vs"], font=FN(40), fill=(150, 156, 170, a), anchor="mm")
+        d.text((W/2, 548), L["title_2"], font=FH(92), fill=(238, 240, 246, a), anchor="mm")
+        wl = d.textlength(L["title_2"], font=FH(92))
         gr = fade(t, 187.2, 190, 0.9, 0.01)
         d.line([(W/2-wl/2, 632), (W/2-wl/2+wl*(gr/255), 632)], fill=RED + (255,), width=6)
         a2 = fade(t, 187.6, 190, 0.9, 0.01)
-        d.text((W/2, 712), "Положи телефон.", font=FN(44), fill=(226, 228, 234, a2), anchor="mm")
-        d.text((W/2, 772), "Или ещё один свайп.", font=FI(40), fill=RED + (a2,), anchor="mm")
+        d.text((W/2, 712), L["out_1"], font=FN(44), fill=(226, 228, 234, a2), anchor="mm")
+        d.text((W/2, 772), L["out_2"], font=FI(40), fill=RED + (a2,), anchor="mm")
 
     letterbox(im)
     dim(im, cut_dim(t_out))

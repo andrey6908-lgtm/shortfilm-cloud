@@ -37,6 +37,7 @@ jobs:
       frames: ${{ steps.job.outputs.frames }}
       fps:    ${{ steps.job.outputs.fps }}
       shards: ${{ steps.job.outputs.shards }}
+      lang:   ${{ steps.job.outputs.lang }}
       list:   ${{ steps.job.outputs.list }}
     steps:
       - uses: actions/checkout@v4
@@ -54,6 +55,7 @@ jobs:
           print(f"frames={frames}")
           print(f"fps={j['fps']}")
           print(f"shards={n}")
+          print("lang=" + j.get("lang", "ru"))
           print("list=" + json.dumps(list(range(n))))
           PY
       - run: |
@@ -93,6 +95,7 @@ jobs:
       - name: Нарисовать свой отрезок
         env:
           SHORTFILM_FONTS: /tmp/assets/fonts
+          SHORTFILM_LANG: ${{ needs.setup.outputs.lang }}
         run: |
           total=${{ needs.setup.outputs.frames }}
           n=${{ needs.setup.outputs.shards }}
@@ -217,6 +220,7 @@ jobs:
       - name: Нарисовать названные кадры
         env:
           SHORTFILM_FONTS: /tmp/assets/fonts
+          SHORTFILM_LANG: ${{ needs.setup.outputs.lang }}
         run: |
           cd engine
           python3 preview.py "${{ needs.setup.outputs.frames_list }}" "$PWD/preview"
@@ -249,6 +253,7 @@ jobs:
       - name: Нарисовать обложку
         env:
           SHORTFILM_FONTS: /tmp/assets/fonts
+          SHORTFILM_LANG: ${{ needs.setup.outputs.lang }}
         run: |
           cd engine
           python3 thumb.py "$PWD/thumb"
