@@ -48,6 +48,9 @@ RU = {
     "th_one":    "1?",
     "th_nights": "3 000 НОЧЕЙ",
     "th_day":    "1 ДЕНЬ?",
+    "th_short":  "3 000?",
+    "th_or2":    "ИЛИ",
+    "th_hook":   "ЕЩЁ ОДИН?",
     # переписка на экране телефона
     "chat_name": "Макс",
     "chat_1":    "встретимся в субботу?",
@@ -100,6 +103,9 @@ PL = {
     "th_one":    "1?",
     "th_nights": "3 000 NOCY",
     "th_day":    "1 DZIEŃ?",
+    "th_short":  "3 000?",
+    "th_or2":    "CZY",
+    "th_hook":   "JESZCZE JEDEN?",
 
     "chat_name": "Marek",
     "chat_1":    "widzimy się w sobotę?",

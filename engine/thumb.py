@@ -270,3 +270,94 @@ def build2():
 if __name__ == "__main__":
     build()
     build2()
+
+
+# ---------------------------------------------------------------------------
+# ВАРИАНТЫ 26.10. Разбор провала v10: CTR 0,7-1,7% при норме 4-6%.
+# Четыре ошибки прежних обложек: пустое лицо (канон «безликий герой» работает
+# ВНУТРИ фильма и убивает превью), двадцать знаков текста вместо четырёх,
+# общая темнота против яркой ленты, пять зон внимания вместо трёх.
+# ---------------------------------------------------------------------------
+
+def sweat(d, x, y, r):
+    """Капля пота у виска — у конкурента именно она делает лицо тревожным."""
+    d.polygon([(x, y-r*1.9), (x+r*0.86, y+r*0.5), (x, y+r*1.15), (x-r*0.86, y+r*0.5)],
+              fill=(150, 214, 255, 255), outline=(12, 16, 26, 255), width=4)
+    d.ellipse([x-r*0.34, y-r*0.18, x+r*0.10, y+r*0.42], fill=(236, 248, 255, 255))
+
+
+def _glow_floor(im, cx, cy, r, col, k):
+    add_glow(im, cx, cy, r, col, k, 2.0)
+
+
+def build3():
+    """А — ПАНИКА: одно лицо почти во весь кадр, капля пота, четыре знака текста."""
+    im, d = new_frame((8, 10, 18, 255))
+    cam = Cam(1.0, W/2, H/2)
+    _glow_floor(im, W*0.62, H*0.78, 760, (90, 150, 255), 0.42)   # отсвет телефона
+    _glow_floor(im, W*0.20, H*0.42, 560, MAG, 0.30)              # розовый якорь слева
+
+    h, hipy = put(head_y=560, hr=300)                            # голова вдвое крупнее
+    draw_person(im, d, cam, (1180, hipy), h, "phone_face", t=0.2, seed=0.3,
+                mood="wired", look=0.0, skin=CREAM, cloth=(104, 116, 140),
+                lit=1.0, outfit="hoodie")
+    sweat(d, 1180 + 300*0.78, 560 - 300*0.18, 26)
+
+    h2, hip2 = put(head_y=470, hr=150)
+    draw_demon(im, d, cam, (470, hip2), h2, "stand", t=1.1, heat=1.7)
+
+    big_text(d, L["th_short"], 96, 84, 190)                      # всего четыре знака
+    im.alpha_composite(vignette(), (0, 0))
+    im.convert("RGB").resize((W, H), Image.LANCZOS).save(os.path.join(OUT, "thumb3.jpg"), quality=95)
+    print("вариант А готов: thumb3.jpg")
+
+
+def build4():
+    """Б — ХОЛОД/ТЕПЛО: два состояния одного человека, одно слово между ними."""
+    im, d = new_frame((8, 10, 18, 255))
+    cam = Cam(1.0, W/2, H/2)
+    _glow_floor(im, W*0.22, H*0.62, 700, (70, 130, 240), 0.50)   # холодная половина
+    _glow_floor(im, W*0.80, H*0.58, 700, AMBER, 0.52)            # тёплая половина
+
+    h, hipy = put(head_y=600, hr=232)
+    draw_person(im, d, cam, (430, hipy), h, "phone_face", t=0.2, seed=0.2,
+                mood="tired", look=0.1, skin=(196, 206, 228), cloth=(78, 92, 122),
+                lit=0.55, outfit="hoodie")
+    h, hipy = put(head_y=600, hr=232)
+    draw_person(im, d, cam, (1490, hipy), h, "sit_chair", t=0.4, seed=0.8,
+                mood="smile", look=-0.25, skin=(236, 214, 186), cloth=(96, 124, 104),
+                lit=1.0, outfit="jacket", scarf=(214, 164, 92))
+    cup(d, 1300, H*0.845, 58)
+
+    big_text(d, L["th_or2"], W/2, H*0.46, 150, fill=(255, 206, 86))
+    im.alpha_composite(vignette(), (0, 0))
+    im.convert("RGB").resize((W, H), Image.LANCZOS).save(os.path.join(OUT, "thumb4.jpg"), quality=95)
+    print("вариант Б готов: thumb4.jpg")
+
+
+def build5():
+    """В — ШЁПОТ: демон вплотную к уху, вопрос его словами."""
+    im, d = new_frame((8, 10, 18, 255))
+    cam = Cam(1.0, W/2, H/2)
+    _glow_floor(im, W*0.55, H*0.70, 820, MAG, 0.44)
+    _glow_floor(im, W*0.76, H*0.80, 520, (90, 150, 255), 0.34)
+
+    h, hipy = put(head_y=600, hr=268)
+    draw_person(im, d, cam, (1230, hipy), h, "phone_face", t=0.2, seed=0.4,
+                mood="wired", look=-0.18, skin=CREAM, cloth=(104, 116, 140),
+                lit=0.95, outfit="hoodie")
+    h2, hip2 = put(head_y=520, hr=206)                           # демон вплотную
+    draw_demon(im, d, cam, (640, hip2), h2, "stand", t=1.3, heat=2.0)
+    sweat(d, 1230 + 268*0.80, 600 - 268*0.16, 24)
+
+    big_text(d, L["th_hook"], 90, H*0.08, 128, fill=(255, 116, 184))
+    im.alpha_composite(vignette(), (0, 0))
+    im.convert("RGB").resize((W, H), Image.LANCZOS).save(os.path.join(OUT, "thumb5.jpg"), quality=95)
+    print("вариант В готов: thumb5.jpg")
+
+
+for _b in (build3, build4, build5):
+    try:
+        _b()
+    except Exception as _e:                 # один упавший вариант не рушит остальные
+        print(f"{_b.__name__} упал: {type(_e).__name__}: {_e}")
