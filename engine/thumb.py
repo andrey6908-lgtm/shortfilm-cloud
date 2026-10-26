@@ -294,8 +294,8 @@ def build3():
     """А — ПАНИКА: одно лицо почти во весь кадр, капля пота, четыре знака текста."""
     im, d = new_frame((8, 10, 18, 255))
     cam = Cam(1.0, W/2, H/2)
-    _glow_floor(im, W*0.62, H*0.78, 760, (90, 150, 255), 0.42)   # отсвет телефона
-    _glow_floor(im, W*0.20, H*0.42, 560, MAG, 0.30)              # розовый якорь слева
+    _glow_floor(im, W*0.62, H*0.78, 860, (90, 150, 255), 0.62)   # отсвет телефона
+    _glow_floor(im, W*0.20, H*0.42, 660, MAG, 0.50)              # розовый якорь слева
 
     h, hipy = put(head_y=560, hr=300)                            # голова вдвое крупнее
     draw_person(im, d, cam, (1180, hipy), h, "phone_face", t=0.2, seed=0.3,
@@ -306,7 +306,7 @@ def build3():
     h2, hip2 = put(head_y=470, hr=150)
     draw_demon(im, d, cam, (470, hip2), h2, "stand", t=1.1, heat=1.7)
 
-    big_text(d, L["th_short"], 96, 84, 190)                      # всего четыре знака
+    big_text(d, L["th_short"], W*0.235, H*0.135, 196)             # x — ЦЕНТР надписи, не край
     im.alpha_composite(vignette(), (0, 0))
     im.convert("RGB").resize((W, H), Image.LANCZOS).save(os.path.join(OUT, "thumb3.jpg"), quality=95)
     print("вариант А готов: thumb3.jpg")
@@ -316,8 +316,8 @@ def build4():
     """Б — ХОЛОД/ТЕПЛО: два состояния одного человека, одно слово между ними."""
     im, d = new_frame((8, 10, 18, 255))
     cam = Cam(1.0, W/2, H/2)
-    _glow_floor(im, W*0.22, H*0.62, 700, (70, 130, 240), 0.50)   # холодная половина
-    _glow_floor(im, W*0.80, H*0.58, 700, AMBER, 0.52)            # тёплая половина
+    _glow_floor(im, W*0.22, H*0.62, 780, (70, 130, 240), 0.66)   # холодная половина
+    _glow_floor(im, W*0.80, H*0.58, 780, AMBER, 0.70)            # тёплая половина
 
     h, hipy = put(head_y=600, hr=232)
     draw_person(im, d, cam, (430, hipy), h, "phone_face", t=0.2, seed=0.2,
@@ -339,8 +339,8 @@ def build5():
     """В — ШЁПОТ: демон вплотную к уху, вопрос его словами."""
     im, d = new_frame((8, 10, 18, 255))
     cam = Cam(1.0, W/2, H/2)
-    _glow_floor(im, W*0.55, H*0.70, 820, MAG, 0.44)
-    _glow_floor(im, W*0.76, H*0.80, 520, (90, 150, 255), 0.34)
+    _glow_floor(im, W*0.55, H*0.70, 900, MAG, 0.62)
+    _glow_floor(im, W*0.76, H*0.80, 600, (90, 150, 255), 0.50)
 
     h, hipy = put(head_y=600, hr=268)
     draw_person(im, d, cam, (1230, hipy), h, "phone_face", t=0.2, seed=0.4,
@@ -350,7 +350,7 @@ def build5():
     draw_demon(im, d, cam, (640, hip2), h2, "stand", t=1.3, heat=2.0)
     sweat(d, 1230 + 268*0.80, 600 - 268*0.16, 24)
 
-    big_text(d, L["th_hook"], 90, H*0.08, 128, fill=(255, 116, 184))
+    big_text(d, L["th_hook"], W*0.285, H*0.115, 132, fill=(255, 116, 184))
     im.alpha_composite(vignette(), (0, 0))
     im.convert("RGB").resize((W, H), Image.LANCZOS).save(os.path.join(OUT, "thumb5.jpg"), quality=95)
     print("вариант В готов: thumb5.jpg")
