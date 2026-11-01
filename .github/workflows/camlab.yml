@@ -1,0 +1,55 @@
+# Лаборатория камеры: один тестовый клип на одной машине.
+#
+# Эффекты камеры, света и объёма обкатываются по одному блоку: сцена рисуется
+# тем же движком, что и короткометражка (numpy+PIL, кадр с нуля), поэтому
+# машина автора не считает ничего. Шрифты и звук сюда не едут — в тестовых
+# сценах нет ни надписей, ни звука.
+name: camlab
+on:
+  push:
+    paths: ["lab/**"]
+  workflow_dispatch:
+concurrency:
+  group: camlab
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  clip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - id: job
+        name: Прочитать задание
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          j = json.load(open("lab/job.json", encoding="utf-8"))
+          print("name=" + j["name"])
+          print("scene=" + j.get("scene", "scene1"))
+          PY
+      - name: Поставить numpy, pillow и ffmpeg
+        run: |
+          pip install --quiet --upgrade numpy pillow imageio-ffmpeg
+          echo "FF=$(python3 -c 'import imageio_ffmpeg as f; print(f.get_ffmpeg_exe())')" >> "$GITHUB_ENV"
+      - name: Нарисовать кадры
+        run: |
+          cd lab/engine
+          WORKERS=$(nproc) python3 shard.py "${{ steps.job.outputs.scene }}"
+          echo "кадров на диске: $(ls frames | wc -l)"
+      - name: Собрать клип
+        run: |
+          "$FF" -nostdin -hide_banner -loglevel error \
+            -framerate 30 -i lab/engine/frames/f%05d.jpg \
+            -c:v libx264 -preset slow -crf 17 -pix_fmt yuv420p \
+            "${{ steps.job.outputs.name }}.mp4"
+          ls -la "${{ steps.job.outputs.name }}.mp4"
+      - name: Выложить релизом
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="lab-${{ steps.job.outputs.name }}-${{ github.run_id }}"
+          gh release create "$tag" "${{ steps.job.outputs.name }}.mp4" \
+             -R "${{ github.repository }}" -t "$tag" -n "Тестовый клип лаборатории камеры."
+          echo "релиз: $tag"
