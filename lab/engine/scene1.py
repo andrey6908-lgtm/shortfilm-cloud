@@ -11,8 +11,10 @@ s = F/(z - camz), центр камеры — её точка стояния. П
 """
 import os, sys, math, random
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from film import (W, H, FPS, Cam, new_frame, finish, mix, lerp, clamp,
-                  smoother, add_glow, CREAM, INK)
+import numpy as np
+from PIL import Image, ImageChops
+from film import (W, H, FPS, SS, SW, SH, SDraw, Cam, new_frame, finish, mix,
+                  lerp, clamp, smoother, add_glow, CREAM, INK)
 from people2 import draw_person, walk_pose, POSES
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frames")
@@ -65,11 +67,45 @@ def lamp(im, d, cam, z, x, h=560):
     d.ellipse(cam.box(x-58, -h-34, x+58, -h+24), fill=far((250, 212, 142), z, 0.45)+(255,))
     add_glow(im, *cam.p(x, -h), cam.r(210), (255, 198, 120), 0.38)
 
-def figure(im, d, cam, z, x, h, pose, t, seed=0.0, face=True, **kw):
-    """Фигура, стоящая ступнями ровно на земле (y=0)."""
-    return draw_person(im, d, cam, (x, -FOOT*h), h, pose, t=t, seed=seed,
-                       skin=far(CREAM, z, 0.70), ink=far(INK, z, 0.45),
-                       face_on=face, **kw)
+LAMP_STEP = 640.0        # шаг фонарей, по ним и считается, откуда падает свет
+
+def _veil(lay, x0, y0, x1, y1, col, grad, strength):
+    """Вуаль поверх фигуры, обрезанная её собственным силуэтом.
+
+    БЛОК 3 — СВЕТ. Рисовальщик стикмена заливает тело одним цветом, бока у него
+    нет. Поэтому фигура рисуется на свой слой, и по слою кладётся линейный
+    градиент, помноженный на АЛЬФУ этого слоя: вуаль ложится ровно на тело и ни
+    на пиксель мимо. Тёмная вуаль даёт теневой бок, тёплая — освещённый.
+    """
+    w, h = x1-x0, y1-y0
+    if w <= 1 or h <= 1: return
+    a = (grad**1.5*(255*strength)).astype(np.uint8)
+    band = np.repeat(a[None, :], h, axis=0)
+    rgb = [np.full((h, w), c, dtype=np.uint8) for c in col]
+    veil = Image.fromarray(np.dstack(rgb + [band]), "RGBA")
+    mask = lay.crop((x0, y0, x1, y1)).getchannel("A")
+    veil.putalpha(ImageChops.multiply(veil.getchannel("A"), mask))
+    lay.alpha_composite(veil, (x0, y0))
+
+def figure(im, d, cam, z, x, h, pose, t, seed=0.0, face=True, lamp=True, **kw):
+    """Фигура, стоящая ступнями ровно на земле, со светом от ближнего фонаря."""
+    lay = Image.new("RGBA", (SW, SH), (0, 0, 0, 0))
+    info = draw_person(lay, SDraw(lay, "RGBA"), cam, (x, -FOOT*h), h, pose,
+                       t=t, seed=seed, skin=far(CREAM, z, 0.70),
+                       ink=far(INK, z, 0.45), face_on=face, **kw)
+    if lamp:
+        cx, cy = cam.p(x, -FOOT*h); r = cam.r(h)
+        x0 = int(max(0, (cx-r*0.9)*SS)); x1 = int(min(SW, (cx+r*0.9)*SS))
+        y0 = int(max(0, (cy-r*0.9)*SS)); y1 = int(min(SH, (cy+r*0.7)*SS))
+        if x1 > x0 and y1 > y0:
+            lx = round(x/LAMP_STEP)*LAMP_STEP          # ближайший фонарь
+            g = np.linspace(0.0, 1.0, x1-x0, dtype=np.float32)
+            if cam.p(lx, 0)[0] > cx: g = g[::-1]       # свет справа — тень слева
+            k = clamp(1.0 - abs(x-lx)/(LAMP_STEP*0.9))  # дальше от фонаря — глуше
+            _veil(lay, x0, y0, x1, y1, (4, 6, 12), g, 0.62)
+            _veil(lay, x0, y0, x1, y1, (255, 206, 142), 1.0-g, 0.30*(0.35+0.65*k))
+    im.alpha_composite(lay)
+    return info
 
 # -------------------------------------------------------------------- кадр
 def frame(i):
@@ -96,15 +132,14 @@ def frame(i):
     kerb(d, cam, Z_LAMPS, -2800, 2800, 640)
     for n in range(-4, 5):
         lamp(im, d, cam, Z_LAMPS, n*640)
-    figure(im, d, cam, Z_LAMPS, 150, 420, "stand", t, seed=1.4, look=0.6,
-           outfit="jacket")
+    figure(im, d, cam, Z_LAMPS, 150, 420, "stand", t, seed=1.4, look=0.6)
     figure(im, d, cam, Z_LAMPS, 400, 410, "stand", t, seed=2.1, look=-0.6,
-           flip=True, outfit="hoodie")
+           flip=True)
 
     # 4) герой крупно спереди — проносится и прибавляет в размере
     cam = plane(Z_HERO, camx, camz)
     kerb(d, cam, Z_HERO, -2000, 2000, 300, post=210)
     figure(im, d, cam, Z_HERO, -250 + 70*t, 420, walk_pose(t*3.1), t,
-           seed=0.0, look=0.35, outfit="hoodie")
+           seed=0.0, look=0.35)
 
     return finish(im).save(f"{OUT}/f{i:05d}.jpg", quality=94)
