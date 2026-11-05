@@ -9,8 +9,13 @@ on:
   push:
     paths: ["lab/**"]
   workflow_dispatch:
+# ГОЧА 05.11.2026: при ОБЩЕЙ группе GitHub держит в ожидании ровно ОДИН прогон,
+# а каждый следующий push отменяет предыдущий ожидающий. Шесть клипов разом
+# дали два готовых и четыре cancelled. Группа по коммиту — клипы независимы и
+# идут параллельно; лаборатория гоняет по одному клипу на сцену, копиться
+# нечему.
 concurrency:
-  group: camlab
+  group: camlab-${{ github.sha }}
   cancel-in-progress: false
 permissions:
   contents: write
