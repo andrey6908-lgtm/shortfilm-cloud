@@ -68,7 +68,7 @@ def figure_light(im, draw_fn, lamp_x, warm=(255, 206, 142), dark=(16, 20, 34),
     return info
 
 
-def ground_shadow(im, cam, foot, h, lamp_x, strength=0.46):
+def ground_shadow(im, cam, foot, h, lamp_x, strength=0.58):
     """Пятно под фигурой. `foot` и `lamp_x` — МИРОВЫЕ координаты одного и
     того же плана (земли). Чем дальше фонарь вбок, тем длиннее тень и тем
     сильнее она уходит в противоположную сторону."""
