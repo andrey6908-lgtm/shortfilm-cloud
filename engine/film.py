@@ -170,8 +170,11 @@ class Cam:
         return (W-px if MIRROR else px, H/2 + (y-self.cy)*self.s)
     def r(self, v): return v*self.s
     def box(self, x0, y0, x1, y1):
+        # При зеркале левый край уезжает правее правого, и PIL валится на
+        # «x1 must be greater than or equal to x0» — порядок нормализуем здесь,
+        # иначе это пришлось бы чинить в каждой декорации (поймано 06.11).
         a = self.p(x0, y0); b = self.p(x1, y1)
-        return [a[0], a[1], b[0], b[1]]
+        return [min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1])]
 
 def drift(t, t0, dur, s0, s1, cx, cy):
     """Один непрерывный наезд, ~1%/с, без обратного хода."""
@@ -236,7 +239,8 @@ class _Shift:
         px, py = self.cam.p(x, y); return (px-self.ox, py-self.oy)
     def r(self, v): return self.cam.r(v)
     def box(self, x0, y0, x1, y1):
-        a = self.p(x0, y0); b = self.p(x1, y1); return [a[0], a[1], b[0], b[1]]
+        a = self.p(x0, y0); b = self.p(x1, y1)
+        return [min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1])]
 
 def demon(im, d, cam, cx, cy_bottom, h, alpha=255, grin=1.0, t=0.0,
           opacity=0.80, soft=3.6):
