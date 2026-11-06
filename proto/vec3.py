@@ -46,38 +46,38 @@ def y(f): return int(H * f)
 bg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}">
 <defs>
  <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
-  <stop offset="0" stop-color="#36474F"/><stop offset="0.62" stop-color="#27363E"/>
-  <stop offset="1" stop-color="#1B272E"/>
+  <stop offset="0" stop-color="#48606B"/><stop offset="0.62" stop-color="#354A55"/>
+  <stop offset="1" stop-color="#25363F"/>
  </linearGradient>
  <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
-  <stop offset="0" stop-color="#243A47"/><stop offset="1" stop-color="#15222B"/>
+  <stop offset="0" stop-color="#2E4A59"/><stop offset="1" stop-color="#1B2C36"/>
  </linearGradient>
  <linearGradient id="seat" x1="0" y1="0" x2="0" y2="1">
-  <stop offset="0" stop-color="#355A6B"/><stop offset="1" stop-color="#203A47"/>
+  <stop offset="0" stop-color="#427A90"/><stop offset="1" stop-color="#2C4F60"/>
  </linearGradient>
  <linearGradient id="lamp" x1="0" y1="0" x2="0" y2="1">
   <stop offset="0" stop-color="#C2D6DA"/><stop offset="1" stop-color="#7E9AA3"/>
  </linearGradient>
  <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
-  <stop offset="0" stop-color="#1E2D35"/><stop offset="1" stop-color="#16222A"/>
+  <stop offset="0" stop-color="#283B45"/><stop offset="1" stop-color="#1F2E37"/>
  </linearGradient>
 </defs>
 <rect width="{W}" height="{H}" fill="url(#wall)"/>
 
 <!-- потолок и световая панель на всю длину вагона -->
-<rect x="0" y="0" width="{W}" height="{y(0.115)}" fill="#2B3C45"/>
+<rect x="0" y="0" width="{W}" height="{y(0.115)}" fill="#3A4F59"/>
 <rect x="{x(0.06)}" y="{y(0.040)}" width="{x(0.88)}" height="{y(0.030)}" rx="{y(0.015)}" fill="url(#lamp)"/>
 <rect x="{x(0.06)}" y="{y(0.070)}" width="{x(0.88)}" height="{y(0.012)}" fill="#55707A" opacity="0.7"/>
 
 <!-- рекламная панель над окнами -->
-<rect x="{x(0.52)}" y="{y(0.145)}" width="{x(0.36)}" height="{y(0.072)}" rx="8" fill="#48616C"/>
+<rect x="{x(0.52)}" y="{y(0.145)}" width="{x(0.36)}" height="{y(0.072)}" rx="8" fill="#5A7682"/>
 <rect x="{x(0.545)}" y="{y(0.163)}" width="{x(0.20)}" height="{y(0.015)}" rx="7" fill="#7C98A2"/>
 <rect x="{x(0.545)}" y="{y(0.187)}" width="{x(0.11)}" height="{y(0.013)}" rx="6" fill="#64818C"/>
 '''
 
 # двустворчатые двери со стыком и резиновым уплотнителем
 dx0, dx1 = x(0.025), x(0.265)
-bg += (f'<rect x="{dx0}" y="{y(0.145)}" width="{dx1-dx0}" height="{y(0.60)}" rx="10" fill="#3E555E"/>'
+bg += (f'<rect x="{dx0}" y="{y(0.145)}" width="{dx1-dx0}" height="{y(0.60)}" rx="10" fill="#52707C"/>'
        f'<rect x="{dx0+14}" y="{y(0.168)}" width="{(dx1-dx0)//2-24}" height="{y(0.30)}" rx="8" fill="url(#glass)"/>'
        f'<rect x="{dx0+(dx1-dx0)//2+10}" y="{y(0.168)}" width="{(dx1-dx0)//2-24}" height="{y(0.30)}" rx="8" fill="url(#glass)"/>'
        f'<rect x="{dx0+(dx1-dx0)//2-7}" y="{y(0.145)}" width="14" height="{y(0.60)}" fill="#1C282F"/>'
@@ -87,7 +87,7 @@ bg += (f'<rect x="{dx0}" y="{y(0.145)}" width="{dx1-dx0}" height="{y(0.60)}" rx=
 # ряд окон тоннеля с рамами и косым бликом
 for i in range(3):
     wx = x(0.30) + i * x(0.235)
-    bg += (f'<rect x="{wx}" y="{y(0.165)}" width="{x(0.205)}" height="{y(0.275)}" rx="14" fill="#445A64"/>'
+    bg += (f'<rect x="{wx}" y="{y(0.165)}" width="{x(0.205)}" height="{y(0.275)}" rx="14" fill="#5A7682"/>'
            f'<rect x="{wx+12}" y="{y(0.178)}" width="{x(0.205)-24}" height="{y(0.249)}" rx="10" fill="url(#glass)"/>'
            f'<path d="M {wx+30} {y(0.425)} L {wx+x(0.11)} {y(0.180)} L {wx+x(0.155)} {y(0.180)}'
            f' L {wx+75} {y(0.425)} Z" fill="#7FA6B6" opacity="0.30"/>')
@@ -117,7 +117,7 @@ bg += f'<rect x="0" y="{y(0.740)}" width="{W}" height="{y(0.26)}" fill="url(#flo
 px_, py_ = x(0.175), y(0.455)
 bg += (f'<circle cx="{px_}" cy="{py_}" r="78" fill="#0E131C"/>'
        f'<path d="M {px_-104} {y(0.95)} L {px_-96} {py_+112} Q {px_-70} {py_+52} {px_} {py_+44}'
-       f' Q {px_+70} {py_+52} {px_+96} {py_+112} L {px_+104} {y(0.95)} Z" fill="#2F4A4F"/>'
+       f' Q {px_+70} {py_+52} {px_+96} {py_+112} L {px_+104} {y(0.95)} Z" fill="#3C6270"/>'
        f'<rect x="{px_-54}" y="{py_-146}" width="108" height="56" rx="28" fill="{PLATE}" stroke="{GOLD}" stroke-width="4"/>'
        f'<text x="{px_}" y="{py_-106}" font-family="{FFAM}" font-weight="bold" font-size="34"'
        f' fill="{GOLD}" text-anchor="middle">12</text>')
@@ -128,50 +128,52 @@ bg += (f'<defs><radialGradient id="src"><stop offset="0" stop-color="#9EC8DF" st
        f'<ellipse cx="{x(0.37)}" cy="{y(0.30)}" rx="{x(0.34)}" ry="{y(0.40)}" fill="url(#src)"/>')
 bg += "</svg>"
 
-im = png(bg).filter(ImageFilter.GaussianBlur(14)).convert("RGBA")
+im = png(bg).filter(ImageFilter.GaussianBlur(9)).convert("RGBA")
 
 # ======================================================= ФИГУРА: ПОСАДКА
 # План по бёдра (голова вдвое мельче прошлого круга), плечи покатые,
 # рукава сужаются к кистям, кисти видны. Корпус сужается книзу, не трапеция.
 cx, cy, hr = 960, 452, 132
-sw = hr * 1.58                      # полуширина плеч
+sw = hr * 1.24                      # плечи узкие: у них толстовка облегает
 
-body = (f'M {cx-sw*0.74} {H} '
-        f'L {cx-sw*0.70} {cy+hr*2.00} '
-        f'Q {cx-sw*0.68} {cy+hr*1.05} {cx-hr*0.60} {cy+hr*0.76} '   # покатое плечо к шее
-        f'Q {cx} {cy+hr*0.44} {cx+hr*0.60} {cy+hr*0.76} '
-        f'Q {cx+sw*0.68} {cy+hr*1.05} {cx+sw*0.70} {cy+hr*2.00} '
-        f'L {cx+sw*0.74} {H} Z')
+body = (f'M {cx-sw*1.14} {H} '
+        f'L {cx-sw*1.00} {cy+hr*2.10} '
+        f'Q {cx-sw*0.96} {cy+hr*1.08} {cx-hr*0.56} {cy+hr*0.78} '   # покатое плечо
+        f'Q {cx} {cy+hr*0.46} {cx+hr*0.56} {cy+hr*0.78} '
+        f'Q {cx+sw*0.96} {cy+hr*1.08} {cx+sw*1.00} {cy+hr*2.10} '
+        f'L {cx+sw*1.14} {H} Z')
 
-def sleeve(s):
-    """Рукав: от плеча вниз, сужается к кисти."""
-    return (f'M {cx+s*sw*0.70} {cy+hr*1.02} '
-            f'Q {cx+s*sw*1.00} {cy+hr*1.62} {cx+s*sw*0.93} {cy+hr*2.70} '
-            f'L {cx+s*sw*0.86} {cy+hr*3.34} '
-            f'L {cx+s*sw*0.62} {cy+hr*3.30} '
-            f'L {cx+s*sw*0.66} {cy+hr*2.60} '
-            f'Q {cx+s*sw*0.60} {cy+hr*1.70} {cx+s*sw*0.52} {cy+hr*1.20} Z')
+def sleeve(s_):
+    """Рукав полосой вдоль корпуса, сужается к кисти, кисть — его продолжение."""
+    o, i = s_*sw*1.02, s_*sw*0.62          # внешний и внутренний край у плеча
+    o2, i2 = s_*sw*1.10, s_*sw*0.74        # у кисти
+    return (f'M {cx+o} {cy+hr*1.16} '
+            f'Q {cx+o*1.06} {cy+hr*2.20} {cx+o2} {cy+hr*3.30} '
+            f'L {cx+i2} {cy+hr*3.26} '
+            f'Q {cx+i*1.02} {cy+hr*2.16} {cx+i} {cy+hr*1.30} Z')
+
+def hand(s_):
+    hx, hy = cx + s_*sw*0.92, cy + hr*3.52
+    return (f'<path d="M {hx-sw*0.19} {hy-hr*0.22} h {sw*0.38} '
+            f'a {sw*0.19} {hr*0.30} 0 0 1 -{sw*0.38} 0 Z" fill="{INK}"/>')
 
 fig = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}">
 <defs>
  <linearGradient id="cl" x1="0" y1="0" x2="0" y2="1">
-  <stop offset="0" stop-color="#3763C9"/><stop offset="1" stop-color="#21438F"/>
+  <stop offset="0" stop-color="#3C69CE"/><stop offset="1" stop-color="#24479A"/>
  </linearGradient>
 </defs>
 <path d="{body}" fill="url(#cl)"/>
-<path d="{sleeve(-1)}" fill="#2A4FAD"/>
-<path d="{sleeve(+1)}" fill="#2A4FAD"/>
-<!-- кисти -->
-<ellipse cx="{cx-sw*0.74}" cy="{cy+hr*3.46}" rx="{sw*0.135}" ry="{sw*0.165}" fill="{INK}"/>
-<ellipse cx="{cx+sw*0.74}" cy="{cy+hr*3.46}" rx="{sw*0.135}" ry="{sw*0.165}" fill="{INK}"/>
-<!-- горловина и шнурки -->
-<path d="M {cx-hr*0.58} {cy+hr*0.78} Q {cx} {cy+hr*1.20} {cx+hr*0.58} {cy+hr*0.78}"
-      fill="none" stroke="#1E3C86" stroke-width="8" stroke-linecap="round"/>
-<path d="M {cx-hr*0.26} {cy+hr*1.06} L {cx-hr*0.30} {cy+hr*2.04}" stroke="#D8DEEA"
+<path d="{sleeve(-1)}" fill="#27499F"/>
+<path d="{sleeve(+1)}" fill="#27499F"/>
+{hand(-1)}
+{hand(+1)}
+<path d="M {cx-hr*0.56} {cy+hr*0.80} Q {cx} {cy+hr*1.22} {cx+hr*0.56} {cy+hr*0.80}"
+      fill="none" stroke="#1C3A84" stroke-width="8" stroke-linecap="round"/>
+<path d="M {cx-hr*0.24} {cy+hr*1.08} L {cx-hr*0.28} {cy+hr*2.02}" stroke="#D8DEEA"
       stroke-width="6" stroke-linecap="round" fill="none"/>
-<path d="M {cx+hr*0.26} {cy+hr*1.06} L {cx+hr*0.30} {cy+hr*2.04}" stroke="#D8DEEA"
+<path d="M {cx+hr*0.24} {cy+hr*1.08} L {cx+hr*0.28} {cy+hr*2.02}" stroke="#D8DEEA"
       stroke-width="6" stroke-linecap="round" fill="none"/>
-<!-- голова -->
 <circle cx="{cx}" cy="{cy}" r="{hr}" fill="{INK}"/>
 <g fill="#F2ECDC">
   <path d="M {cx-hr*0.60} {cy+hr*0.06} h {hr*0.44} a {hr*0.22} {hr*0.16} 0 0 1 0 {hr*0.20}
@@ -223,10 +225,10 @@ a = np.asarray(im.convert("RGB")).astype(np.float32)
 # один тон на сцену: всё, что не фигура, стягивается к сине-зелёной оси
 yy, xx = np.mgrid[0:H, 0:W]
 r = np.sqrt(((xx - W / 2) / (W / 2)) ** 2 + ((yy - H / 2) / (H / 2)) ** 2)
-a *= np.clip(1.04 - 0.30 * np.clip(r - 0.50, 0, None) ** 1.5, 0, 1)[..., None]
+a *= np.clip(1.03 - 0.20 * np.clip(r - 0.55, 0, None) ** 1.5, 0, 1)[..., None]
 
 # белого в кадре нет: верх зажат, как у них (99-й перцентиль 122-233)
-a = 216.0 * (a / 255.0) ** 1.03
+a = 228.0 * (a / 255.0) ** 0.92
 # чёрный не чистый, а тонированный в синеву — пол по каналам, не общий
 a = np.maximum(a, np.array([5.0, 5.0, 9.0]))
 
@@ -234,7 +236,7 @@ out = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
 d = ImageDraw.Draw(out)
 d.rectangle([0, 0, W, LB], fill=(0, 0, 0))
 d.rectangle([0, H - LB, W, H], fill=(0, 0, 0))
-out.save("vec2.jpg", quality=95)
+out.save("vec3.jpg", quality=95)
 
 # ============================================================= ЗАМЕР
 b = np.asarray(out).astype(np.float32)
@@ -242,6 +244,6 @@ g = b.mean(2)
 core = b[int(H * 0.07):int(H * 0.93)]
 mx, mn = core.max(2), core.min(2)
 s = np.where(mx > 8, (mx - mn) / np.maximum(mx, 1), 0)
-print("круг 2: ярк %.1f  медиана %.0f  99-й перц %.0f  насыщ %.3f  провалов в чёрный %.1f%%"
+print("круг 3: ярк %.1f  медиана %.0f  99-й перц %.0f  насыщ %.3f  провалов в чёрный %.1f%%"
       % (g.mean(), np.median(g), np.percentile(g, 99), s.mean(), ((mx / 255.0) < 0.06).mean() * 100))
 print("цель Ifverse: медиана 170  99-й перц 122-233  насыщ 0,18-0,40  провалов 3,3%")
