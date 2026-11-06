@@ -27,15 +27,28 @@ class SDraw:
         if "radius" in kw and kw["radius"] is not None:
             kw["radius"] = kw["radius"]*SS
         return kw
+    @staticmethod
+    def _bb(xy):
+        """Рамка в порядке, который понимает PIL.
+
+        При зеркальной версии (SHORTFILM_MIRROR) левый край кадра уезжает
+        правее правого, и PIL валится на «x1 must be greater than or equal to
+        x0» — причём из любой декорации и любой фигуры. Нормализуем здесь один
+        раз, а не чинить каждое место по очереди (поймано 06.11 на рамке
+        окна, потом на капсуле руки)."""
+        v = _sc(xy)
+        if isinstance(v, (list, tuple)) and len(v) == 4 and not isinstance(v[0], (list, tuple)):
+            return [min(v[0], v[2]), min(v[1], v[3]), max(v[0], v[2]), max(v[1], v[3])]
+        return v
     def text(self, xy, *a, **kw): self.d.text(_sc(xy), *a, **self._kw(kw))
     def textlength(self, *a, **kw): return self.d.textlength(*a, **kw)/SS
     def line(self, xy, **kw): self.d.line(_sc(xy), **self._kw(kw))
-    def ellipse(self, xy, **kw): self.d.ellipse(_sc(xy), **self._kw(kw))
-    def rectangle(self, xy, **kw): self.d.rectangle(_sc(xy), **self._kw(kw))
-    def rounded_rectangle(self, xy, **kw): self.d.rounded_rectangle(_sc(xy), **self._kw(kw))
+    def ellipse(self, xy, **kw): self.d.ellipse(self._bb(xy), **self._kw(kw))
+    def rectangle(self, xy, **kw): self.d.rectangle(self._bb(xy), **self._kw(kw))
+    def rounded_rectangle(self, xy, **kw): self.d.rounded_rectangle(self._bb(xy), **self._kw(kw))
     def polygon(self, xy, **kw): self.d.polygon(_sc(xy), **self._kw(kw))
-    def arc(self, xy, *a, **kw): self.d.arc(_sc(xy), *a, **self._kw(kw))
-    def chord(self, xy, *a, **kw): self.d.chord(_sc(xy), *a, **self._kw(kw))
+    def arc(self, xy, *a, **kw): self.d.arc(self._bb(xy), *a, **self._kw(kw))
+    def chord(self, xy, *a, **kw): self.d.chord(self._bb(xy), *a, **self._kw(kw))
 
 def new_frame(bg=(6, 7, 10, 255)):
     im = Image.new("RGBA", (SW, SH), bg)

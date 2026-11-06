@@ -238,7 +238,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.ASSETS_KEY }}
       - run: git clone --depth 1 git@github.com:${{ github.repository_owner }}/shortfilm-assets.git /tmp/assets
-      - run: pip install --quiet --upgrade numpy pillow
+      - run: pip install --quiet --upgrade numpy pillow arabic-reshaper python-bidi
 
       - name: Нарисовать названные кадры
         env:
@@ -275,7 +275,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.ASSETS_KEY }}
       - run: git clone --depth 1 git@github.com:${{ github.repository_owner }}/shortfilm-assets.git /tmp/assets
-      - run: pip install --quiet --upgrade numpy pillow
+      - run: pip install --quiet --upgrade numpy pillow arabic-reshaper python-bidi
 
       - name: Нарисовать обложку
         env:
