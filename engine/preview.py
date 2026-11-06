@@ -6,7 +6,7 @@
 Нужен, чтобы смотреть правки глазами, НЕ трогая машину автора (его слово 22.10).
 Один процесс, сотни мегабайт, секунды на кадр.
 """
-import os, sys
+import os, sys, time
 from PIL import Image, ImageDraw, ImageFont
 import render3, film
 
@@ -15,9 +15,19 @@ out = sys.argv[2] if len(sys.argv) > 2 else "preview"
 os.makedirs(out, exist_ok=True)
 render3.OUT = out
 
+# ВРЕМЯ КАДРА ПЕЧАТАЕТСЯ ЧИСЛОМ (06.11). Иначе цену новой сцены назвать
+# нечем: мерить на машине автора нельзя, а раннер до сих пор говорил только
+# «готов». Среднее по кадрам — это и есть «сколько секунд машины стоит кадр».
+spent = []
 for n in nums:
+    t0 = time.perf_counter()
     render3.frame(n)
-    print(f"кадр {n} готов")
+    dt = time.perf_counter() - t0
+    spent.append(dt)
+    print(f"кадр {n} готов за {dt:.2f} с")
+if spent:
+    print("СРЕДНЕЕ НА КАДР: %.2f с (кадров %d, всего %.1f с)"
+          % (sum(spent) / len(spent), len(spent), sum(spent)))
 
 cols = 1 if len(nums) <= 3 else 2
 rows = (len(nums) + cols - 1)//cols
