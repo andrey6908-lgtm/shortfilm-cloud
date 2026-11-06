@@ -60,12 +60,29 @@ def span_time(t, spans):
         elif t > a: s += t-a
     return s
 RT = sum(b-a for a, b in RSP); NT = sum(b-a for a, b in NSP)
+# ПОЧЕРК КАМЕРЫ ВЕРСИИ (SHORTFILM_CAM). Амплитуды взяты с замера Ifverse
+# (РАЗБОР.md, п.6): камера там либо стоит, либо едет около 2% ширины кадра в
+# секунду в сторону, зум-аутов нет вовсе. Поэтому движения мелкие и медленные —
+# версии расходятся по ощущению, но ни одна не начинает «плавать».
+CAM = os.environ.get("SHORTFILM_CAM", "none").lower()
+
+def cam_style(c, t):
+    s_, cx_, cy_ = c.s, c.cx, c.cy
+    if   CAM == "drift":  cx_ += 26*math.sin(t*0.045)
+    elif CAM == "breath": s_  *= 1 + 0.015*math.sin(t*0.45)
+    elif CAM == "push":   s_  *= 1 + 0.040*smoother(clamp(t/186.0))
+    elif CAM == "float":  cy_ += 18*math.sin(t*0.050)
+    elif CAM == "sway":   cx_ += 20*math.sin(t*0.037); s_ *= 1 + 0.010*math.sin(t*0.29)
+    elif CAM == "glide":  cx_ += 30*math.sin(t*0.030); s_ *= 1 + 0.025*smoother(clamp(t/186.0))
+    elif CAM != "none":   raise SystemExit(f"неизвестный почерк камеры SHORTFILM_CAM={CAM}")
+    return Cam(s_, cx_, cy_)
+
 def room_cam(t, zoom=0.0):
     k = smoother(span_time(t, RSP)/RT)
-    return Cam(lerp(1.12, 1.30, k)+zoom, lerp(820, 880, k), lerp(680, 700, k))
+    return cam_style(Cam(lerp(1.12, 1.30, k)+zoom, lerp(820, 880, k), lerp(680, 700, k)), t)
 def near_cam(t):
     k = smoother(span_time(t, NSP)/NT)
-    return Cam(lerp(1.00, 1.08, k), 960, lerp(520, 500, k))
+    return cam_style(Cam(lerp(1.00, 1.08, k), 960, lerp(520, 500, k)), t)
 
 def fade(t, a, b, inn=0.8, out=0.8):
     if t < a or t > b: return 0
