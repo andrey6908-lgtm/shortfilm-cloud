@@ -1,0 +1,49 @@
+# Прототипы стиля (Ifverse и прочие): один кадр одним прогоном.
+#
+# Машина автора не считает ничего: cairosvg рисует вектор здесь, готовый jpg
+# уезжает релизом. Чужих материалов сюда не кладём — только наш код.
+name: proto
+on:
+  push:
+    paths: ["proto/**"]
+  workflow_dispatch:
+concurrency:
+  group: proto-${{ github.sha }}
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  frame:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - id: job
+        name: Прочитать задание
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          j = json.load(open("proto/job.json", encoding="utf-8"))
+          print("name=" + j["name"])
+          print("script=" + j["script"])
+          PY
+      - name: Поставить вектор и шрифты
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-liberation libcairo2 >/dev/null
+          pip install --quiet --upgrade cairosvg numpy pillow
+          python3 -c "import cairosvg; print('cairosvg', cairosvg.__version__)"
+          fc-list | grep -ci liberation || true
+      - name: Нарисовать кадр
+        run: |
+          cd proto
+          python3 "${{ steps.job.outputs.script }}"
+          ls -la *.jpg
+      - name: Выложить релизом
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="proto-${{ steps.job.outputs.name }}-${{ github.run_id }}"
+          gh release create "$tag" proto/*.jpg -R "${{ github.repository }}" \
+             -t "$tag" -n "Прототип стиля, один кадр."
+          echo "релиз: $tag"
