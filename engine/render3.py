@@ -5,6 +5,7 @@ from film import *
 from lang import L
 from rooms import *
 from people2 import *
+import camera3 as cam3
 from PIL import Image
 from multiprocessing import Pool
 
@@ -312,16 +313,30 @@ def frame(i):
              fade(t, 1.0, 6.4, 0.9, 0.8), im, y=H/2)
 
     elif inside(t, "street1"):
+        # ЕДИНСТВЕННАЯ СЦЕНА С ПРИЁМАМИ ЛАБОРАТОРИИ КАМЕРЫ (06.11): проводка
+        # с параллаксом (блок 1 и 10), свет по фигуре (блок 3) и тень на
+        # земле (блок 4). Остальные сцены ролика не тронуты ни на кадр.
         l = lt(t, "street1")
         cam = Cam(lerp(1.00, 1.06, smoother(l/15)), 960, 640)
-        street_evening(im, d, cam, t, warm=0.34)
         walk = -160 + l*58
+        pan = walk*0.85            # камера идёт с героями, мир уезжает мимо
+        street_evening(im, d, cam, t, warm=0.34, pan=pan)
+        gcam = cam3.plane(cam, pan, cam3.K_GROUND)
         ph = l*3.1
-        draw_person(im, d, cam, (700+walk, 700), 430, walk_pose(ph), t=t, seed=0.0,
-                    mood=talks(l, 1.0), look=0.5, **HERO)
-        draw_person(im, d, cam, (980+walk, 700), 418, walk_pose(ph+2.9), t=t, seed=0.6,
-                    mood=talks(l), look=-0.5, skin=SKIN2,
-                    **GIRL)
+        hero_x, girl_x = 700+walk, 980+walk
+        for fx, fh in ((hero_x, 430), (girl_x, 418)):
+            cam3.ground_shadow(im, gcam, (fx, 700), fh, street_lamp_x(fx))
+        cam3.figure_light(
+            im, lambda lay, ld: draw_person(lay, ld, gcam, (hero_x, 700), 430,
+                                            walk_pose(ph), t=t, seed=0.0,
+                                            mood=talks(l, 1.0), look=0.5, **HERO),
+            gcam.p(street_lamp_x(hero_x), 0)[0])
+        cam3.figure_light(
+            im, lambda lay, ld: draw_person(lay, ld, gcam, (girl_x, 700), 418,
+                                            walk_pose(ph+2.9), t=t, seed=0.6,
+                                            mood=talks(l), look=-0.5, skin=SKIN2,
+                                            **GIRL),
+            gcam.p(street_lamp_x(girl_x), 0)[0])
         narr(d, [(L["n02"], False)],
              fade(t, 9.0, 20.5, 0.9, 0.9), im)
 

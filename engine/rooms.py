@@ -5,6 +5,7 @@ import math, random
 import numpy as np
 from PIL import Image, ImageDraw
 from film import W, H, SS, SW, SH, Cam, mix, lerp, clamp, add_glow, soft_ellipse, flicker, AMBER, RED, MAG
+import camera3 as cam3
 
 LINE  = (96, 104, 124)      # контур мебели в темноте
 LINE2 = (64, 70, 86)        # дальний план
@@ -228,38 +229,68 @@ def cups_and_hands(d, cam, t=0.0, skin=(238, 230, 218), skin2=(222, 206, 186)):
             line(d, cam, pts, (186, 176, 168), 2.6, 110, live=False)   # пар и так волна
 
 
-def street_evening(im, d, cam, t=0.0, warm=0.30):
-    """Вечерняя улица: дома, фонари, тротуар."""
+def street_evening(im, d, cam, t=0.0, warm=0.30, pan=0.0):
+    """Вечерняя улица: дома, фонари, тротуар.
+
+    `pan` — сдвиг камеры вдоль улицы в мировых единицах (проводка за героями).
+    При нулевом сдвиге кадр ровно тот же, что был до 06.11: план один, камера
+    одна. При ненулевом включается ПАРАЛЛАКС — приём 1 лаборатории камеры:
+    у каждого плана своя глубина, поэтому небо почти стоит, дальние дома
+    ползут, ближние идут заметно быстрее, а тротуар уезжает вровень с шагом.
+    Ощущение расстояния между планами берётся из одной только разницы
+    скоростей, ничего дорисовывать не нужно.
+    """
+    c_far = cam3.plane(cam, pan, cam3.K_FAR)
+    c_near = cam3.plane(cam, pan, cam3.K_NEAR)
+    c_gnd = cam3.plane(cam, pan, cam3.K_GROUND)
     sky_t = mix((16, 19, 30), (52, 32, 22), warm)
     sky_b = mix((34, 38, 54), (120, 72, 46), warm)
     arr = np.zeros((H, 1, 3), dtype=np.uint8)
     for y in range(H): arr[y, 0] = mix(sky_t, sky_b, (y/H) ** 1.5)
     im.alpha_composite(Image.fromarray(arr, "RGB").resize((SW, SH)).convert("RGBA"), (0, 0))
     rnd = random.Random(44)
+    # запас улицы по ходу проводки: иначе дома кончаются и справа встаёт пустота
+    span = abs(pan) + 200
     for layer, (col, hmin, hmax) in enumerate([((22, 25, 38), 300, 560), ((14, 16, 25), 180, 380)]):
+        cl = c_far if layer == 0 else c_near
         c = mix(col, (44, 28, 20), warm)
-        x = -160
-        while x < W + 160:
+        x = -160 - span
+        while x < W + 160 + span:
             bw_ = rnd.uniform(130, 210); bh = rnd.uniform(hmin, hmax)
-            d.rectangle(cam.box(x, 820-bh, x+bw_, 840), fill=c + (255,))
-            d.rectangle(cam.box(x, 820-bh, x+bw_, 840), outline=mix(c, (120, 128, 150), 0.35) + (255,),
-                        width=_w(cam, 3))
+            if cl.p(x + bw_, 0)[0] < -80 or cl.p(x, 0)[0] > W + 80:
+                x += bw_ + rnd.uniform(14, 40)   # дом за краем кадра не рисуем
+                continue
+            d.rectangle(cl.box(x, 820-bh, x+bw_, 840), fill=c + (255,))
+            d.rectangle(cl.box(x, 820-bh, x+bw_, 840), outline=mix(c, (120, 128, 150), 0.35) + (255,),
+                        width=_w(cl, 3))
             if layer == 0:
                 for k in range(int(bh//92)):
                     for j in range(3):
                         lit = (math.sin(k*2.7 + j*1.9 + x*0.013) > -0.25)
-                        d.rectangle(cam.box(x+26+j*44, 820-bh+34+k*92, x+52+j*44, 820-bh+70+k*92),
+                        d.rectangle(cl.box(x+26+j*44, 820-bh+34+k*92, x+52+j*44, 820-bh+70+k*92),
                                     fill=mix(c, AMBER, 0.62 if lit else 0.10) + (255,))
             x += bw_ + rnd.uniform(14, 40)
-    d.rectangle(cam.box(-200, 840, W+200, H+200), fill=mix((20, 23, 34), (46, 30, 20), warm) + (255,))
-    line(d, cam, [(-200, 840), (W+200, 840)], (112, 120, 142), 4)
-    line(d, cam, [(-200, 966), (W+200, 966)], (72, 78, 96), 3)
-    for lx in (180, 820, 1480):                            # фонари
-        line(d, cam, [(lx, 840), (lx, 420)], (110, 118, 140), 7)
-        line(d, cam, [(lx, 424), (lx+74, 410)], (110, 118, 140), 6)
-        d.ellipse(cam.box(lx+58, 398, lx+102, 428), fill=(255, 222, 160, 255))
-        add_glow(im, *cam.p(lx+80, 414), cam.r(240), (255, 210, 150),
+    d.rectangle(c_gnd.box(-200-span, 840, W+200+span, H+200), fill=mix((20, 23, 34), (46, 30, 20), warm) + (255,))
+    line(d, c_gnd, [(-200-span, 840), (W+200+span, 840)], (112, 120, 142), 4)
+    line(d, c_gnd, [(-200-span, 966), (W+200+span, 966)], (72, 78, 96), 3)
+    lamps = [180, 820, 1480] if not pan else [180 + 660*k for k in range(int(span//660) + 4)]
+    for lx in lamps:                                       # фонари
+        if c_gnd.p(lx + 120, 0)[0] < -60 or c_gnd.p(lx - 60, 0)[0] > W + 60:
+            continue
+        line(d, c_gnd, [(lx, 840), (lx, 420)], (110, 118, 140), 7)
+        line(d, c_gnd, [(lx, 424), (lx+74, 410)], (110, 118, 140), 6)
+        d.ellipse(c_gnd.box(lx+58, 398, lx+102, 428), fill=(255, 222, 160, 255))
+        add_glow(im, *c_gnd.p(lx+80, 414), c_gnd.r(240), (255, 210, 150),
                  0.42*flicker(t, lx*0.0013, 0.17, 0.7), 2.1)
+
+
+def street_lamp_x(world_x):
+    """Мировая координата СВЕТА ближайшего фонаря (центр плафона).
+    Свет закреплён в МИРЕ — правило лаборатории камеры, — поэтому при
+    проводке освещённый бок героя переезжает сам, без лишнего кода."""
+    k = round((world_x - 260) / 660.0)
+    return 180 + 660 * k + 80
+
 
 def bus_stop(d, cam, x=1400):
     rrect(d, cam, (x-300, 470, x+300, 500), 6, (34, 38, 50), (118, 126, 148), 4)
