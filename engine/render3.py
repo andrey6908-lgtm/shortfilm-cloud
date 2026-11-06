@@ -11,7 +11,12 @@ from multiprocessing import Pool
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frames3")
 os.makedirs(OUT, exist_ok=True)
-DUR = 186.0   # 190 минус 4 срезанные с уличной сцены (см. TRIM ниже)
+# Темп версии. Ролики на разные каналы обязаны отличаться и длительностью
+# (прямое слово пользователя 06.11), поэтому наружное время тянется целиком:
+# внутреннее время сцен не меняется ни на кадр, меняется только шаг. Звук
+# сдвигается тем же числом — sound.sh читает ту же переменную.
+SPEED = float(os.environ.get("SHORTFILM_SPEED", "1"))
+DUR = 186.0 * SPEED   # 190 минус 4 срезанные с уличной сцены (см. TRIM ниже)
 SKIN2 = (222, 204, 182)
 
 TRIM_AT, TRIM = 18.0, 4.0   # вырез 4 с из уличной сцены, см. frame()
@@ -304,7 +309,7 @@ def closeup_phone(im, d, cam, t, rows, bright=1.0, chat=False):
 # по-прежнему считается в старой сетке, ошибиться негде. Длительность ролика при
 # этом 186 с, и ровно на столько же сдвинуты отметки звука в cloud/sound.sh.
 def frame(i):
-    t_out = i/FPS
+    t_out = i/FPS/SPEED
     t = t_out + TRIM if t_out >= TRIM_AT else t_out
     im, d = new_frame((6, 7, 10, 255))
 

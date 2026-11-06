@@ -72,10 +72,11 @@ import lang
 FD = os.environ.get("SHORTFILM_FONTS", "/mnt/c/Windows/Fonts/")
 if not FD.endswith("/"): FD += "/"
 def font(n, s): return ImageFont.truetype(FD + n, max(1, int(round(s*SS))))
-FN  = lambda s: font("calibril.ttf", s)
-FNB = lambda s: font("calibri.ttf", s)
-FH  = lambda s: font("bahnschrift.ttf", s)
-FI  = lambda s: font("calibrili.ttf", s)
+_F1, _F2, _F3, _F4 = lang.fonts()           # свой набор на язык (lang.FONTS)
+FN  = lambda s: font(_F1, s)
+FNB = lambda s: font(_F2, s)
+FH  = lambda s: font(_F3, s)
+FI  = lambda s: font(_F4, s)
 FW  = lambda s: font(lang.hand_font(), s)   # почерк демона, по языку (см. lang.HAND_FONT)
 
 CREAM = (239, 231, 219)
@@ -159,10 +160,14 @@ def soft_ellipse(base, cx, cy, rx, ry, color, strength=1.0, falloff=2.0):
     base.alpha_composite(e, (int(cx - e.width/2), int(cy - e.height/2)))
 
 # ---------- камера ----------
+MIRROR = os.environ.get("SHORTFILM_MIRROR", "0") == "1"
+
 class Cam:
     def __init__(self, scale=1.0, cx=W/2, cy=H/2):
         self.s, self.cx, self.cy = scale, cx, cy
-    def p(self, x, y): return (W/2 + (x-self.cx)*self.s, H/2 + (y-self.cy)*self.s)
+    def p(self, x, y):
+        px = W/2 + (x-self.cx)*self.s
+        return (W-px if MIRROR else px, H/2 + (y-self.cy)*self.s)
     def r(self, v): return v*self.s
     def box(self, x0, y0, x1, y1):
         a = self.p(x0, y0); b = self.p(x1, y1)
@@ -572,6 +577,11 @@ _TONES = {
     #       R (гамма, усиление)  G                   B
     "ru": ((1.00, 1.00), (1.00, 1.00), (1.00, 1.00)),   # исходная, без коррекции
     "pl": ((0.98, 1.03), (1.04, 0.95), (0.88, 1.09)),   # ночь холоднее, свет медовее
+    "fr": ((0.94, 1.06), (0.99, 1.00), (1.08, 0.92)),   # тёплая сепия, ночь мягче
+    "es": ((0.92, 1.08), (1.00, 1.01), (1.10, 0.90)),   # янтарь, контраст выше
+    "it": ((1.02, 0.98), (0.95, 1.05), (1.06, 0.94)),   # оливково-зелёная ночь
+    "ro": ((0.99, 1.02), (1.08, 0.94), (0.93, 1.06)),   # холодный фиолет
+    "ar": ((0.90, 1.10), (1.03, 0.98), (1.14, 0.88)),   # песок и медь
 }
 if TONE not in _TONES:
     raise SystemExit(f"неизвестная тональность SHORTFILM_TONE={TONE}, есть: {', '.join(_TONES)}")
@@ -579,7 +589,8 @@ _GRADE = TONE != "ru"
 _x = np.arange(256, dtype=np.float32) / 255.0
 _LUT = np.stack([np.clip((_x ** gam) * gain * 255.0, 0, 255).astype(np.uint8)
                  for gam, gain in _TONES[TONE]], axis=1)     # (256, 3)
-_GRAIN_SEED = {"ru": 3, "pl": 11}.get(TONE, 3)
+_GRAIN_SEED = {"ru": 3, "pl": 11, "fr": 23, "es": 37,
+               "it": 51, "ro": 67, "ar": 83}.get(TONE, 3)
 
 _noise = np.random.default_rng(_GRAIN_SEED).integers(-5, 6, (H, W, 1), dtype=np.int16)
 def finish(im):
