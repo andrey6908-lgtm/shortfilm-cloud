@@ -322,3 +322,67 @@ def pull_bar(d, cam, x=960, top=240, floor=980):
     line(d, cam, [(x-260, top), (x+260, top)], LINE, 4.0)
     line(d, cam, [(x-260, top), (x-260, floor)], LINE, 3.0)
     line(d, cam, [(x+260, top), (x+260, floor)], LINE, 3.0)
+
+
+# --------------------------------------------------------------- ВЕТЕР
+def wind(d, cam, t=0.0, n=14, y0=120, y1=900, speed=900, col=(226, 232, 244),
+         alpha=90, slant=0.22):
+    """Полоски ветра. У них по ним сразу читается движение (его слово 07.11)."""
+    rr = random.Random(11)
+    for i in range(n):
+        base = rr.uniform(-600, 2400)
+        yy = rr.uniform(y0, y1)
+        ln = rr.uniform(120, 420)
+        x = (base + t*speed*rr.uniform(0.7, 1.4)) % 3200 - 700
+        line(d, cam, [(x, yy), (x+ln, yy-ln*slant)], col, rr.uniform(1.6, 3.0),
+             int(alpha*rr.uniform(0.5, 1.0)), live=False)
+
+
+# ------------------------------------------------------- ЛУЧ ИЗ ОКНА
+def light_shaft(im, cam, x0, y0, x1, y1, w=180, col=(176, 198, 236), k=1.0,
+                t=0.0):
+    """Объёмный луч света в тёмной комнате: у них свет ИГРАЕТ."""
+    if k <= 0.01: return
+    lay = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    dl = ImageDraw.Draw(lay, "RGBA")
+    br = 1.0 + 0.10*math.sin(t*0.9)          # луч дышит
+    a = int(40*k*br)
+    p0, p1 = cam.p(x0, y0), cam.p(x1, y1)
+    vx, vy = p1[0]-p0[0], p1[1]-p0[1]
+    ln = math.hypot(vx, vy) or 1
+    nx, ny = -vy/ln, vx/ln
+    w0, w1 = w*0.45*cam.r(1.0), w*cam.r(1.0)
+    dl.polygon([(p0[0]+nx*w0, p0[1]+ny*w0), (p1[0]+nx*w1, p1[1]+ny*w1),
+                (p1[0]-nx*w1, p1[1]-ny*w1), (p0[0]-nx*w0, p0[1]-ny*w0)],
+               fill=col + (a,))
+    im.alpha_composite(lay.filter(ImageFilter.GaussianBlur(26*SS)), (0, 0))
+
+
+# ------------------------------------------- ЗЕРКАЛО РАЗЛЕТАЕТСЯ
+def mirror_burst(im, d, cam, cx, cy, rx, ry, k, t=0.0):
+    """Взрыв зеркала: вспышка, осколки веером, свет кусками.
+
+    Его слово 07.11: «он разбивает беса, свет как он разлетается на куски,
+    сзади фоном разбитое стекло». Раньше зеркало просто трескалось и этого
+    никто не понимал.
+    """
+    if k <= 0.01: return
+    add_glow(im, *cam.p(cx, cy), cam.r(rx*(2.2 + 2.6*k)), (255, 236, 240),
+             0.55*k, 1.8)
+    rr = random.Random(23)
+    for i in range(34):
+        a = rr.uniform(0, 6.283)
+        dist = rx*(0.4 + 2.8*k*rr.uniform(0.4, 1.0))
+        sx, sy = cx + math.cos(a)*dist, cy + math.sin(a)*dist*0.8
+        sz = rx*rr.uniform(0.05, 0.16)*(1.0 - 0.3*k)
+        rot = a + t*2.0
+        pts = [(sx + math.cos(rot)*sz, sy + math.sin(rot)*sz),
+               (sx + math.cos(rot+2.1)*sz*0.8, sy + math.sin(rot+2.1)*sz*0.8),
+               (sx + math.cos(rot+4.2)*sz*0.6, sy + math.sin(rot+4.2)*sz*0.6)]
+        d.polygon([cam.p(*q) for q in pts],
+                  fill=(228, 236, 248, int(230*min(1.0, k*1.6))))
+    for i in range(10):                       # лучи света из точки разлома
+        a = i*0.628 + t*0.4
+        ln = rx*(1.2 + 3.0*k)
+        line(d, cam, [(cx, cy), (cx+math.cos(a)*ln, cy+math.sin(a)*ln*0.8)],
+             (255, 244, 248), 3.0*k, int(200*k), live=False)

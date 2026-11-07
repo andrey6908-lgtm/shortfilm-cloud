@@ -24,10 +24,10 @@ from film import breathe, blink
 # принятого прототипа, светлое тело с чёрной обводкой и живое лицо — из хита
 # ниши. Тёмный герой прототипа на ЧЁРНОМ фоне тонул (сверка 07.11,
 # СРАВНЕНИЕ-С-ОРИГИНАЛОМ.jpg): у Ifverse фон вагона светлый, у Day One чёрный.
-SKIN   = "#F0EADC"      # тело и лицо — светлые, читаются на чёрном
-OUTL   = "#15151C"      # обводка каждой части, как у них
-CLOTH1 = "#5A8AE8"
-CLOTH2 = "#3F68C4"
+SKIN   = "#F7F2E6"      # тело и лицо — светлые, читаются на чёрном
+OUTL   = "#0A0A10"      # обводка каждой части, как у них
+CLOTH1 = "#5E90F2"
+CLOTH2 = "#3A63C8"
 SLEEVE = "#4A79D8"
 PANTS  = "#3E4868"
 FACE   = "#15151C"      # черты лица — тёмные по светлой голове
@@ -129,7 +129,7 @@ def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
     sle = "#1A1A24" if dark else SLEEVE
     pnt = "#14141C" if dark else PANTS
     out = "#6A2630" if dark else OUTL
-    sw_line = hr*0.17                    # толщина обводки от размера головы
+    sw_line = hr*0.225      # жирнее: у них контур мощнее (его слово 07.11)                    # толщина обводки от размера головы
 
     g = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" '
          f'width="{W}" height="{H}">',
@@ -203,9 +203,15 @@ def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
         g.append(f'<path d="M {bx0:.1f} {head[1]-hr*0.52:.1f} '
                  f'h {hr*2.12:.1f}" stroke="{BAND}" stroke-width="{hr*0.30:.1f}" '
                  f'fill="none"/>')
-        g.append(f'<path d="M {head[0]+hr*0.92:.1f} {head[1]-hr*0.48:.1f} '
-                 f'l {hr*0.72:.1f} {hr*0.36:.1f}" stroke="{BAND}" '
-                 f'stroke-width="{hr*0.18:.1f}" fill="none"/>')
+        # хвост ленты живёт на ветру: две волны с разной фазой
+        w1 = breathe(t, 0.72, hr*0.30, seed*4.0)
+        w2 = breathe(t, 1.13, hr*0.22, seed*6.0)
+        bx1, by1 = head[0]+hr*0.92, head[1]-hr*0.48
+        g.append(f'<path d="M {bx1:.1f} {by1:.1f} '
+                 f'q {hr*0.42:.1f} {w1:.1f} {hr*0.86:.1f} {hr*0.20+w2:.1f} '
+                 f'q {hr*0.34:.1f} {w2:.1f} {hr*0.70:.1f} {hr*0.38-w1:.1f}" '
+                 f'stroke="{BAND}" stroke-width="{hr*0.17:.1f}" fill="none" '
+                 f'stroke-linecap="round"/>')
     g.append("</g></svg>")
     return "".join(g), head, hr, world
 
@@ -234,3 +240,47 @@ def draw_vecman(im, cam, hip, h, pose, t=0.0, mood="neutral", look=0.0,
     im.alpha_composite(Image.open(io.BytesIO(png)).convert("RGBA"), (0, 0))
     return dict(head=world["head"], hr=hr/ss,
                 hand_l=world.get("hand_l"), hand_r=world.get("hand_r"))
+
+
+# ----------------------------------------------- ПРИВЯЗКА К ОПОРЕ
+def foot_drop(h, pose, flip=False):
+    """На сколько НИЖЕ таза оказывается самая низкая точка опоры.
+
+    Нужна, чтобы ставить фигуру НА пол, кровать, ступень, а не «примерно
+    туда». Его слово 07.11: «пол живёт отдельно, лестница отдельно, кровать
+    отдельно, он спит неизвестно где».
+    """
+    from people2 import POSES
+    if isinstance(pose, str): pose = POSES[pose]
+    f = -1 if flip else 1
+    hr_w = h*0.143
+    L_th, L_sh = h*0.205, h*0.200
+    L_ua, L_fa = h*0.150, h*0.142
+    sw = hr_w*1.24
+    lean = pose["lean"]*f
+    axis = -90 + lean
+    nrm = _rot(axis + 90, 1.0)
+    hy = pose.get("hip_y", 0.0)*h
+    low = 0.0
+    for side, (ta, sa) in (("l", (pose["thigh_l"], pose["shin_l"])),
+                           ("r", (pose["thigh_r"], pose["shin_r"]))):
+        off = (-1 if side == "l" else 1)*sw*0.34*f
+        p0 = (nrm[0]*off, hy + nrm[1]*off)
+        p1 = _add(p0, _rot(ta if not flip else 180-ta, L_th))
+        p2 = _add(p1, _rot(sa if not flip else 180-sa, L_sh))
+        low = max(low, p2[1] + hr_w*0.40*0.72)
+    sh_c = _add((0.0, hy), _rot(axis, h*0.325))
+    for side, (ua, fa) in (("l", (pose["ua_l"], pose["fa_l"])),
+                           ("r", (pose["ua_r"], pose["fa_r"]))):
+        off = (-1 if side == "l" else 1)*sw*0.74*f
+        along = _rot(axis, -h*0.040)
+        p0 = (sh_c[0] + nrm[0]*off + along[0], sh_c[1] + nrm[1]*off + along[1])
+        p1 = _add(p0, _rot(ua if not flip else 180-ua, L_ua))
+        p2 = _add(p1, _rot(fa if not flip else 180-fa, L_fa))
+        low = max(low, p2[1] + hr_w*0.34*0.78)
+    return low
+
+
+def stand_on(x, floor_y, h, pose, flip=False):
+    """Точка таза, при которой фигура СТОИТ (лежит, опирается) на floor_y."""
+    return (x, floor_y - foot_drop(h, pose, flip=flip))

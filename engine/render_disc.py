@@ -16,6 +16,7 @@ from rooms import *
 from rooms import _w, rrect, line as rline
 import rooms_disc as rd
 import vecman as vm
+from vecman import stand_on
 from people2 import *
 from render3 import phone_at, bed_cover          # телефон в руке — общий с первым фильмом
 from PIL import Image
@@ -118,7 +119,7 @@ def frame(i):
         l = lt(t, "sleep")
         cam = Cam(lerp(1.10, 1.20, smoother(l/7)), 820, 690)
         bedroom(im, d, cam, t, clock_text="5:00", rain=False)
-        hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired", look=0.2)
+        hero(im, cam, stand_on(700, 792, 430, "lie"), 430, "lie", t=t, mood="tired", look=0.2)
         bed_cover(d, cam, top=760)
         add_glow(im, *cam.p(206, 668), cam.r(210), RED, 0.40*flicker(t, 9.0), 2.4)
         whisper(d, L["w0"], t, 7.4, hold=3.2, size=46, at=(1020, 300))
@@ -128,7 +129,7 @@ def frame(i):
         l = lt(t, "over")
         cam = Cam(1.22, 300, 660)
         bedroom(im, d, cam, t, clock_text="5:08" if l < 2.4 else "7:40", rain=False)
-        hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired")
+        hero(im, cam, stand_on(700, 792, 430, "lie"), 430, "lie", t=t, mood="tired")
         bed_cover(d, cam, top=760)
         for k in range(2):
             yy = 470 - k*52 - (l*8) % 40
@@ -140,7 +141,7 @@ def frame(i):
         l = lt(t, "sofa1")
         cam = Cam(lerp(1.06, 1.15, smoother(l/7)), 900, 700)
         _sofa(im, d, cam, t)
-        inf = hero(im, cam, (845, 752), 430, "slouch", t=t,
+        inf = hero(im, cam, stand_on(845, 742, 430, "slouch"), 430, "slouch", t=t,
                           mood="wired", look=0.4, lit=0.8, **HERO)
         phone_at(im, d, cam, inf["hand_r"], 54, 1.0, l*1.4)
         draw_demon(im, d, cam, (1290, 846), 430, "stand", t=t,
@@ -153,7 +154,8 @@ def frame(i):
         l = lt(t, "desk")
         cam = Cam(lerp(1.04, 1.14, smoother(l/6)), 940, 700)
         rd.desk_night(im, d, cam, t, lamp=1.0)
-        hero(im, cam, (900, 870), 420, "sit_chair", t=t,
+        rd.light_shaft(im, cam, 1150, 520, 980, 900, w=150, col=(255, 206, 142), k=0.8, t=t)
+        hero(im, cam, stand_on(900, 884, 420, "sit_chair"), 420, "sit_chair", t=t,
                     mood="tired", look=0.3, lit=0.9, **HERO)
         draw_demon(im, d, cam, (560, 880), 440, "reach", t=t,
                    alpha=int(255*fade(t, 26.0, 31, 1.4, 0.01)), heat=1.0)
@@ -167,14 +169,14 @@ def frame(i):
         k = int(l // 2.0)
         if k == 0:
             cam = Cam(1.18, 900, 700); _sofa(im, d, cam, t)
-            inf = hero(im, cam, (865, 758), 430, "slouch", t=t,
+            inf = hero(im, cam, stand_on(865, 742, 430, "slouch"), 430, "slouch", t=t,
                               mood="wired", lit=0.85, **HERO)
             phone_at(im, d, cam, inf["hand_r"], 54, 1.0, l*3.0)
             day_badge(d, 112, mark="skip")
         elif k == 1:
             cam = Cam(1.26, 760, 700)
             bedroom(im, d, cam, t, clock_text="4:12", rain=False)
-            hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired")
+            hero(im, cam, stand_on(700, 792, 430, "lie"), 430, "lie", t=t, mood="tired")
             bed_cover(d, cam, top=760)
             day_badge(d, 200, mark="skip")
         elif k == 2:
@@ -185,7 +187,7 @@ def frame(i):
         else:
             cam = Cam(1.30, 760, 700)
             bedroom(im, d, cam, t, clock_text="5:00", rain=False)
-            hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired", **HERO)
+            hero(im, cam, stand_on(700, 792, 430, "lie"), 430, "lie", t=t, mood="tired", **HERO)
             add_glow(im, *cam.p(206, 668), cam.r(220), RED, 0.46, 2.4)
             day_badge(d, 365, mark="skip")
         caption(d, im, L["year"], fade(t, 33.4, 38.6, 0.8, 0.8), y=250, bold=True)
@@ -201,13 +203,15 @@ def frame(i):
         # кто это и почему (его слово 07.11: «что она символизирует?»).
         step = smoother(clamp((l-0.4)/3.0))
         hero_x = lerp(430, 700, step)
-        refl_a = int(240*clamp((l-2.2)/1.6))
+        refl_a = int(240*clamp((l-2.2)/1.6)*clamp((9.2-l)/1.0))
         if refl_a > 6:
             hero(im, cam, (mx, my+mry*0.82), 400, "stand", t=t,
                         mood="angry", look=-0.4, dark=True, alpha=refl_a/255.0)
             add_glow(im, *cam.p(mx, my), cam.r(mrx*1.3), MAG, 0.22, 2.6)
-        hero(im, cam, (hero_x, 880), 430, "stand", t=t, mood="tired",
+        hero(im, cam, stand_on(hero_x, 952, 430, "stand"), 430, "stand", t=t, mood="tired",
                     look=0.6, lit=0.5, **HERO)
+        if l > 8.2:                                  # зеркало разлетается
+            rd.mirror_burst(im, d, cam, mx, my, mrx, mry, clamp((l-8.2)/1.6), t)
         if l > 6.0:
             f = FW(126)
             w = d.textlength(L["w4"], font=f)
@@ -219,7 +223,7 @@ def frame(i):
         l = lt(t, "bottom")
         rd.spotlight(im, d, Cam(1.0), 960, 980, k=clamp(l/1.4))
         cam = Cam(lerp(0.96, 1.08, smoother(l/12)), 960, 760)
-        hero(im, cam, (960, 960), 330, "curl", t=t, mood="tired",
+        hero(im, cam, stand_on(960, 980, 330, "curl"), 330, "curl", t=t, mood="tired",
                     look=0.0, lit=0.9, **HERO)
         caption(d, im, L["mid_1"], fade(t, 51.0, 56.4, 0.9, 0.9), y=420)
         caption(d, im, L["mid_2a"], fade(t, 57.2, 61.6, 0.9, 0.7), y=400)
@@ -251,12 +255,13 @@ def frame(i):
         l = lt(t, "run")
         cam = Cam(lerp(1.02, 1.10, smoother(l/8)), 960, 560)   # проводка с наездом
         rd.city(im, d, cam, t, pan=l*170)
+        rd.wind(d, cam, t, n=16, y0=380, y1=820, speed=1500, alpha=70)
         ph = l*3.4
         soft_ellipse(im, *cam.p(960, 772), cam.r(120), cam.r(18), (0, 0, 0), 0.45)
         draw_demon(im, d, cam, (1420, 790), 430, "stand", t=t,
                    alpha=int(235*fade(t, 72.0, 79, 1.2, 0.01)), heat=1.0)
         whisper(d, L["w6"], t, 73.0, hold=2.6, size=48, at=(1300, 250))
-        inf = hero(im, cam, (960, 760), 470,
+        inf = hero(im, cam, stand_on(960, 780, 470, pose_mix("run_a","run_b",0.5)), 470,
                           pose_mix("run_a", "run_b", 0.5+0.5*math.sin(ph)),
                           t=t, mood="angry", look=0.5, band=True)
         day_badge(d, 3)
@@ -268,7 +273,7 @@ def frame(i):
         line(d, cam, [(100, 980), (1820, 980)], LINE, 3.2)
         soft_ellipse(im, *cam.p(900, 972), cam.r(230), cam.r(22), (0, 0, 0), 0.40)
         k = 0.5+0.5*math.sin(l*3.0)
-        inf = hero(im, cam, (880, 905), 450,
+        inf = hero(im, cam, stand_on(880, 980, 450, "pushup_up"), 450,
                           pose_mix("pushup_up", "pushup_dn", k), t=t,
                           mood="angry", look=0.3, band=True)
         day_badge(d, 12)
@@ -285,12 +290,24 @@ def frame(i):
         hit = max(0.0, math.sin(l*3.4))**2
         rd.heavy_bag(im, d, cam, t, hit=hit, speed_lines=clamp((l-1.0)/2.0)*0.7,
                      hero_x=980, floor=980)
-        inf = hero(im, cam, (980, 900), 480,
+        inf = hero(im, cam, stand_on(980, 980, 480, "guard"), 480,
                           pose_mix("guard", "punch", hit), t=t, mood="angry",
                           look=0.6, **HERO)
         draw_demon(im, d, cam, (480, 920), 240, "stand", t=t, alpha=170, heat=0.8)
         day_badge(d, 64)
         whisper(d, L["w5"], t, 93.0, hold=2.6, size=52, at=(1300, 250))
+        # у них при ударах постоянно вспыхивают надписи — держим ритм
+        if hit > 0.55:
+            n_hit = int(l*3.4/ (2*math.pi) * 2) + 1
+            f = FNB(104)
+            w = d.textlength(str(n_hit), font=f)
+            d.text((1560 - w/2, 300), str(n_hit), font=f,
+                   fill=CREAM + (int(235*min(1.0, (hit-0.55)*3)),))
+        for k, (tw, tx, ty) in enumerate(((L["done"], 520, 300), ("+1", 1520, 540))):
+            a = fade(t, 92.6 + k*3.2, 95.0 + k*3.2, 0.25, 0.5)
+            if a > 0.01:
+                f = FH(54)
+                d.text((tx, ty), tw, font=f, fill=(120, 214, 140, int(220*a)))
 
     elif inside(t, "dumb"):                                  # ДЕНЬ 28 — гантели
         l = lt(t, "dumb")
@@ -298,7 +315,7 @@ def frame(i):
         rd.pull_bar(d, cam, 700, 250, 980)
         line(d, cam, [(100, 980), (1820, 980)], LINE, 3.2)
         k = 0.5 + 0.5*math.sin(l*3.2)
-        inf = hero(im, cam, (960, 900), 480,
+        inf = hero(im, cam, stand_on(960, 980, 480, "curl_dn"), 480,
                           pose_mix("curl_dn", "curl_up", k), t=t, mood="angry",
                           look=0.4, **HERO)
         rd.dumbbell(d, cam, inf["hand_l"], 26)
@@ -311,8 +328,9 @@ def frame(i):
         l = lt(t, "tread")
         cam = Cam(lerp(0.98, 1.06, smoother(l/6)), 960, 640)
         rd.treadmill(im, d, cam, t, x=960, floor=980, speed=1.0)
+        rd.wind(d, cam, t, n=10, y0=420, y1=800, speed=1800, alpha=55)
         ph = l*4.2
-        inf = hero(im, cam, (930, 760), 430,
+        inf = hero(im, cam, stand_on(930, 926, 430, pose_mix("run_a","run_b",0.5)), 430,
                    pose_mix("run_a", "run_b", 0.5+0.5*math.sin(ph)),
                    t=t, mood="angry", look=0.3, band=True)
         draw_demon(im, d, cam, (1560, 960), 170, "stand", t=t, alpha=140, heat=0.7)
@@ -324,7 +342,7 @@ def frame(i):
         line(d, cam, [(100, 980), (1820, 980)], LINE, 3.2)
         rd.pull_bar(d, cam, 1340, 240, 980)
         k = 0.5 + 0.5*math.sin(l*2.6)
-        inf = hero(im, cam, (900, 900), 480,
+        inf = hero(im, cam, stand_on(900, 980, 480, "kettle_dn"), 480,
                           pose_mix("kettle_dn", "kettle_up", k), t=t,
                           mood="angry", look=0.5, band=True)
         hx = (inf["hand_l"][0]+inf["hand_r"][0])/2
@@ -339,7 +357,7 @@ def frame(i):
         cam = Cam(1.1, 960, 820)
         line(d, cam, [(200, 980), (1720, 980)], LINE, 3.2)
         k = 0.5+0.5*math.sin(l*3.6)
-        inf = hero(im, cam, (880, 905), 450,
+        inf = hero(im, cam, stand_on(880, 980, 450, "pushup_up"), 450,
                           pose_mix("pushup_up", "pushup_dn", k), t=t, mood="angry", band=True)
         draw_demon(im, d, cam, (1660, 972), 70, "stand", t=t, alpha=80, heat=0.5)
         day_badge(d, 190)
@@ -357,7 +375,7 @@ def frame(i):
         hero_y = 980 - step*92 - frac*92
         cam = Cam(1.0, hero_x + 140, hero_y - 250)
         rd.stairs(im, d, cam, t, shift=0)
-        inf = hero(im, cam, (hero_x, hero_y), 455,
+        inf = hero(im, cam, stand_on(hero_x, hero_y, 455, "climb"), 455,
                           pose_mix("climb", "stand", 0.5+0.5*math.sin(ph*math.pi)),
                           t=t, mood="angry", look=0.5, band=True)
         soft_ellipse(im, *cam.p(hero_x, hero_y-6), cam.r(90), cam.r(14), (0, 0, 0), 0.45)
@@ -388,8 +406,9 @@ def frame(i):
         # идут, ветер сносит повязку, герой поворачивается к рассвету.
         cam = Cam(lerp(1.00, 1.14, smoother(l/14)), 960, 640)
         rd.summit(im, d, cam, t, k=1.0, rise=smoother(clamp(l/12)))
+        rd.wind(d, cam, t, n=12, y0=200, y1=760, speed=520, col=(255, 222, 190), alpha=60, slant=0.10)
         turn = smoother(clamp((l-5.0)/3.0))
-        inf = hero(im, cam, (900, 706), 360, "stand", t=t,
+        inf = hero(im, cam, stand_on(900, 880, 360, "stand"), 360, "stand", t=t,
                           mood="neutral", look=lerp(-0.2, 0.7, turn), band=True)
         soft_ellipse(im, *cam.p(900, 704), cam.r(80), cam.r(12), (0, 0, 0), 0.35)
         rd.flash(im, clamp((1.2-l)/1.2)*0.9)
