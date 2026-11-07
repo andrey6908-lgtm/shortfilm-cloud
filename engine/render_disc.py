@@ -140,7 +140,7 @@ def frame(i):
         l = lt(t, "sofa1")
         cam = Cam(lerp(1.06, 1.15, smoother(l/7)), 900, 700)
         _sofa(im, d, cam, t)
-        inf = hero(im, cam, (860, 724), 430, "slouch", t=t,
+        inf = hero(im, cam, (845, 752), 430, "slouch", t=t,
                           mood="wired", look=0.4, lit=0.8, **HERO)
         phone_at(im, d, cam, inf["hand_r"], 54, 1.0, l*1.4)
         draw_demon(im, d, cam, (1290, 846), 430, "stand", t=t,
@@ -167,7 +167,7 @@ def frame(i):
         k = int(l // 2.0)
         if k == 0:
             cam = Cam(1.18, 900, 700); _sofa(im, d, cam, t)
-            inf = hero(im, cam, (880, 730), 430, "slouch", t=t,
+            inf = hero(im, cam, (865, 758), 430, "slouch", t=t,
                               mood="wired", lit=0.85, **HERO)
             phone_at(im, d, cam, inf["hand_r"], 54, 1.0, l*3.0)
             day_badge(d, 112, mark="skip")
