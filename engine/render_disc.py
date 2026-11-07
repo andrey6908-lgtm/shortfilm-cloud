@@ -266,7 +266,7 @@ def frame(i):
         line(d, cam, [(100, 980), (1820, 980)], LINE, 3.2)
         soft_ellipse(im, *cam.p(900, 972), cam.r(230), cam.r(22), (0, 0, 0), 0.40)
         k = 0.5+0.5*math.sin(l*3.0)
-        inf = hero(im, cam, (900, 988), 400,
+        inf = hero(im, cam, (900, 890), 400,
                           pose_mix("pushup_up", "pushup_dn", k), t=t,
                           mood="angry", look=0.3, band=True)
         day_badge(d, 12)
@@ -280,10 +280,10 @@ def frame(i):
     elif inside(t, "bag"):
         l = lt(t, "bag")
         cam = Cam(lerp(1.00, 1.08, smoother(l/8)), 1010, 660)
-        hit = max(0.0, math.sin(l*2.8))**3
+        hit = max(0.0, math.sin(l*3.4))**2
         rd.heavy_bag(im, d, cam, t, hit=hit, speed_lines=clamp((l-1.0)/2.0)*0.7,
-                     hero_x=900, floor=980)
-        inf = hero(im, cam, (900, 860), 420,
+                     hero_x=980, floor=980)
+        inf = hero(im, cam, (980, 900), 420,
                           pose_mix("guard", "punch", hit), t=t, mood="angry",
                           look=0.6, **HERO)
         draw_demon(im, d, cam, (480, 920), 240, "stand", t=t, alpha=170, heat=0.8)
@@ -337,7 +337,7 @@ def frame(i):
         cam = Cam(1.1, 960, 820)
         line(d, cam, [(200, 980), (1720, 980)], LINE, 3.2)
         k = 0.5+0.5*math.sin(l*3.6)
-        inf = hero(im, cam, (900, 988), 400,
+        inf = hero(im, cam, (900, 890), 400,
                           pose_mix("pushup_up", "pushup_dn", k), t=t, mood="angry", band=True)
         draw_demon(im, d, cam, (1660, 972), 70, "stand", t=t, alpha=80, heat=0.5)
         day_badge(d, 190)
