@@ -59,8 +59,8 @@ def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
     P = cam.p
     f = -1 if flip else 1
     hr_w = h*0.143                       # в мире
-    L_th, L_sh = h*0.185, h*0.175
-    L_ua, L_fa = h*0.145, h*0.135
+    L_th, L_sh = h*0.205, h*0.200
+    L_ua, L_fa = h*0.150, h*0.142
     sw = hr_w*1.24
     k = cam.r(1.0)                       # мир → экран
     hr = hr_w*k

@@ -387,10 +387,10 @@ def draw_demon(im, d, cam, hip, h, pose, t=0.0, alpha=255, grin=1.0, flip=False,
 POSES.update({
  # упор лёжа: корпус горизонтален головой влево, руки отвесно в пол,
  # ноги прямой линией назад
- "pushup_up":  dict(thigh_l=2,  shin_l=0,  thigh_r=-4, shin_r=-2,
-                    ua_l=88, fa_l=92, ua_r=92, fa_r=88, lean=-80, head=10, hip_y=0.20),
- "pushup_dn":  dict(thigh_l=2,  shin_l=0,  thigh_r=-4, shin_r=-2,
-                    ua_l=66, fa_l=118, ua_r=70, fa_r=114, lean=-84, head=14, hip_y=0.30),
+ "pushup_up":  dict(thigh_l=6,  shin_l=2,  thigh_r=-6, shin_r=-2,
+                    ua_l=84, fa_l=96, ua_r=96, fa_r=84, lean=-86, head=16, hip_y=0.12),
+ "pushup_dn":  dict(thigh_l=6,  shin_l=2,  thigh_r=-6, shin_r=-2,
+                    ua_l=58, fa_l=124, ua_r=62, fa_r=120, lean=-88, head=20, hip_y=0.22),
  # бег: шаг, корпус подан вперёд, руки работают встречно
  "run_a":      dict(thigh_l=66, shin_l=104, thigh_r=116, shin_r=56,
                     ua_l=132, fa_l=74, ua_r=52, fa_r=108, lean=16, head=-8, hip_y=0.0),
