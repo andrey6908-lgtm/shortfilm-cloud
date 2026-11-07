@@ -148,11 +148,14 @@ def stairs(im, d, cam, t=0.0, shift=0.0):
 # -------------------------------------------------------------- ВЕРШИНА
 def summit(im, d, cam, t=0.0, k=1.0):
     """Единственная цветная сцена фильма: рассвет с вершины."""
-    a = np.zeros((H, W, 3), np.float32)
-    yy = np.linspace(0, 1, H)[:, None]
-    sky_top, sky_bot = np.array([26, 18, 36]), np.array([236, 126, 46])
-    a[:] = (sky_top + (sky_bot - sky_top) * (yy ** 2.1))[..., None].transpose(0, 2, 1)
-    im.paste(Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).convert("RGBA"), (0, 0))
+    # Градиент неба: (H,1,3) растягивается на всю ширину. Прежняя транспозиция
+    # давала полосу шириной 3 px и обрезанное небо справа (поймано 07.11).
+    yy = np.linspace(0, 1, H)[:, None, None]
+    sky_top = np.array([26, 18, 36], np.float32)
+    sky_bot = np.array([236, 126, 46], np.float32)
+    a = np.repeat(sky_top + (sky_bot - sky_top) * (yy ** 2.1), W, axis=1)
+    sky = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).convert("RGBA")
+    im.paste(sky.resize((im.width, im.height), Image.BILINEAR), (0, 0))
     sx, sy = 1080, 620
     add_glow(im, sx, sy, 520, (255, 206, 128), 0.75*k, 2.0)
     d.ellipse(cam.box(sx-70, sy-70, sx+70, sy+70), fill=(255, 226, 170, 255))
