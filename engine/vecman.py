@@ -64,15 +64,15 @@ def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
     sw = hr_w*1.24
     k = cam.r(1.0)                       # мир → экран
     hr = hr_w*k
-    r_leg, r_arm = hr*0.42, hr*0.40
+    r_leg, r_arm = hr*0.40, hr*0.34
 
     world = {}
     hx, hy = hip[0], hip[1] + pose.get("hip_y", 0.0)*h
     lean = pose["lean"]*f
     axis = -90 + lean
     nrm = _rot(axis + 90, 1.0)
-    sh_c = _add((hx, hy), _rot(axis, h*0.300))
-    head = _add(sh_c, _rot(axis + pose["head"]*f, hr*1.16))
+    sh_c = _add((hx, hy), _rot(axis, h*0.325))
+    head = _add(sh_c, _rot(axis + pose["head"]*f, hr_w*0.82))
 
     legs, arms, hands, feet = [], [], [], []
     for side, (ta, sa) in (("l", (pose["thigh_l"], pose["shin_l"])),
@@ -85,8 +85,8 @@ def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
         feet.append((P(*p2), r_leg*0.72))
     for side, (ua, fa) in (("l", (pose["ua_l"], pose["fa_l"])),
                            ("r", (pose["ua_r"], pose["fa_r"]))):
-        off = (-1 if side == "l" else 1)*sw*0.92*f
-        along = _rot(axis, -h*0.018)
+        off = (-1 if side == "l" else 1)*sw*0.74*f
+        along = _rot(axis, -h*0.040)
         p0 = (sh_c[0] + nrm[0]*off + along[0], sh_c[1] + nrm[1]*off + along[1])
         p1 = _add(p0, _rot(ua if not flip else 180-ua, L_ua))
         p2 = _add(p1, _rot(fa if not flip else 180-fa, L_fa))
@@ -96,10 +96,10 @@ def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
 
     # корпус: покатые плечи, книзу чуть уже
     tnx, tny = nrm
-    sx0, sy0 = P(sh_c[0] - tnx*sw*0.96, sh_c[1] - tny*sw*0.96)
-    sx1, sy1 = P(sh_c[0] + tnx*sw*0.96, sh_c[1] + tny*sw*0.96)
-    hx0, hy0 = P(hx - tnx*sw*0.86, hy - tny*sw*0.86)
-    hx1, hy1 = P(hx + tnx*sw*0.86, hy + tny*sw*0.86)
+    sx0, sy0 = P(sh_c[0] - tnx*sw*0.80, sh_c[1] - tny*sw*0.80)
+    sx1, sy1 = P(sh_c[0] + tnx*sw*0.80, sh_c[1] + tny*sw*0.80)
+    hx0, hy0 = P(hx - tnx*sw*0.68, hy - tny*sw*0.68)
+    hx1, hy1 = P(hx + tnx*sw*0.68, hy + tny*sw*0.68)
     neck = P(*_add(sh_c, _rot(axis, hr*0.30)))
     world["head"] = head
     head = P(*head)
@@ -123,7 +123,7 @@ def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
     for p in legs: g.append(f'<path d="{p}" fill="{pnt}"/>')
     for p, r in feet: g.append(_dot(p, r) + f' fill="{ink}"/>')
     g.append(f'<path d="{torso}" fill="url(#cl)"/>')
-    g.append(_dot(sh_scr, sw*0.96) + f' fill="url(#cl)"/>')
+    g.append(_dot(sh_scr, sw*0.80*k) + f' fill="url(#cl)"/>')
     for p in arms: g.append(f'<path d="{p}" fill="{sle}"/>')
     for p, r in hands: g.append(_dot(p, r) + f' fill="{ink}"/>')
     g.append(_dot(head, hr) + f' fill="{ink}"/>')
