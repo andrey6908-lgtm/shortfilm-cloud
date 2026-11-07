@@ -294,18 +294,18 @@ def kettlebell(d, cam, p, r=34):
 
 def treadmill(im, d, cam, t=0.0, x=960, floor=980, speed=0.0):
     """Беговая дорожка: полотно бежит, на консоли мигают цифры."""
-    bw, bh = 460, 46
+    bw, bh = 620, 54
     rrect(d, cam, (x-bw/2, floor-bh, x+bw/2, floor), 14, FILLD, LINE, 3.0)
     off = (t*speed*120) % 46
     for i in range(int(bw/46)+2):
         px = x-bw/2+10+i*46-off
         if px < x-bw/2+6 or px > x+bw/2-6: continue
         line(d, cam, [(px, floor-bh+8), (px, floor-8)], LINE2, 2.2, 170, live=False)
-    line(d, cam, [(x+bw/2-30, floor-bh), (x+bw/2-10, floor-250)], LINE, 3.0)
-    line(d, cam, [(x-bw/2+30, floor-bh), (x-bw/2+10, floor-250)], LINE, 3.0)
-    line(d, cam, [(x-bw/2+10, floor-250), (x+bw/2-10, floor-250)], LINE, 3.0)
-    rrect(d, cam, (x+bw/2-150, floor-350, x+bw/2+20, floor-250), 10, (12, 14, 20), LINE, 2.6)
-    add_glow(im, *cam.p(x+bw/2-65, floor-300), cam.r(90), (120, 210, 255), 0.26, 2.4)
+    line(d, cam, [(x+bw/2-30, floor-bh), (x+bw/2-10, floor-330)], LINE, 3.4)
+    line(d, cam, [(x-bw/2+30, floor-bh), (x-bw/2+10, floor-330)], LINE, 3.4)
+    line(d, cam, [(x-bw/2+10, floor-330), (x+bw/2-10, floor-330)], LINE, 3.4)
+    rrect(d, cam, (x+bw/2-180, floor-450, x+bw/2+20, floor-330), 10, (12, 14, 20), LINE, 2.8)
+    add_glow(im, *cam.p(x+bw/2-80, floor-390), cam.r(110), (120, 210, 255), 0.24, 2.4)
     soft_ellipse(im, *cam.p(x, floor-6), cam.r(240), cam.r(28), (0, 0, 0), 0.5)
 
 

@@ -310,9 +310,9 @@ def frame(i):
         cam = Cam(lerp(1.00, 1.09, smoother(l/6)), 960, 700)
         rd.treadmill(im, d, cam, t, x=960, floor=980, speed=1.0)
         ph = l*4.2
-        inf = hero(im, cam, (900, 934), 455,
-                          pose_mix("run_a", "run_b", 0.5+0.5*math.sin(ph)),
-                          t=t, mood="angry", look=0.5, band=True)
+        inf = hero(im, cam, (900, 946), 440,
+                   pose_mix("run_a", "run_b", 0.5+0.5*math.sin(ph)),
+                   t=t, mood="angry", look=0.3, band=True)
         draw_demon(im, d, cam, (1560, 960), 170, "stand", t=t, alpha=140, heat=0.7)
         day_badge(d, 96)
 

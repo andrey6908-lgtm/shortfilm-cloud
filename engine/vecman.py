@@ -167,10 +167,16 @@ def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
     brow_y = head[1] - hr*0.30
     for s_ in (-1, 1):
         x0 = head[0] + s_*ex - hr*0.21 + dx
-        tilt = {"angry": -0.16, "sad": 0.14, "tired": 0.08}.get(mood, 0.0)
-        g.append(f'<path d="M {x0:.1f} {brow_y + s_*tilt*hr:.1f} '
-                 f'l {hr*0.42:.1f} {-s_*tilt*hr*2:.1f}" stroke="{fc}" '
-                 f'stroke-width="{hr*0.105:.1f}" fill="none"/>')
+        tilt = {"angry": 0.20, "sad": -0.15, "tired": -0.09, "wired": 0.10}.get(mood, 0.0)
+        # внутренний конец брови — тот, что ближе к центру лица
+        y_out = brow_y - tilt*hr*0.5
+        y_in  = brow_y + tilt*hr*0.5
+        if s_ < 0:
+            g.append(f'<path d="M {x0:.1f} {y_out:.1f} l {hr*0.42:.1f} {y_in-y_out:.1f}" '
+                     f'stroke="{fc}" stroke-width="{hr*0.105:.1f}" fill="none"/>')
+        else:
+            g.append(f'<path d="M {x0:.1f} {y_in:.1f} l {hr*0.42:.1f} {y_out-y_in:.1f}" '
+                     f'stroke="{fc}" stroke-width="{hr*0.105:.1f}" fill="none"/>')
     mw = hr*0.42
     mouth = {"angry": -hr*0.10, "sad": hr*0.12}.get(mood, 0.0)
     g.append(f'<path d="M {head[0]-mw/2:.1f} {head[1]+hr*0.46:.1f} '
