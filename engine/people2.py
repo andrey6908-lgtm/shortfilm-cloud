@@ -413,9 +413,9 @@ POSES.update({
                     ua_l=124, fa_l=-50, ua_r=2,  fa_r=0,   lean=20, head=-4, hip_y=0.06),
  # подъём по лестнице: ведущая нога высоко, корпус вперёд
  "climb":      dict(thigh_l=38, shin_l=104, thigh_r=104, shin_r=94,
-                    ua_l=-28, fa_l=-14, ua_r=128, fa_r=96, lean=30, head=-18, hip_y=0.04),
+                    ua_l=16, fa_l=30, ua_r=120, fa_r=100, lean=26, head=-14, hip_y=0.04),
  "climb2":     dict(thigh_l=100, shin_l=96, thigh_r=36, shin_r=108,
-                    ua_l=124, fa_l=98, ua_r=-24, fa_r=-10, lean=30, head=-18, hip_y=0.04),
+                    ua_l=118, fa_l=102, ua_r=20, fa_r=34, lean=26, head=-14, hip_y=0.04),
  # подъём гантелей на бицепс
  "curl_dn":    dict(thigh_l=100, shin_l=92, thigh_r=80, shin_r=88,
                     ua_l=96, fa_l=92, ua_r=84, fa_r=88, lean=2, head=0, hip_y=0.0),
