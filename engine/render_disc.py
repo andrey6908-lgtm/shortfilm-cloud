@@ -261,9 +261,11 @@ def frame(i):
         draw_demon(im, d, cam, (1420, 790), 430, "stand", t=t,
                    alpha=int(235*fade(t, 72.0, 79, 1.2, 0.01)), heat=1.0)
         whisper(d, L["w6"], t, 73.0, hold=2.6, size=48, at=(1300, 250))
-        inf = hero(im, cam, stand_on(960, 780, 470, pose_mix("run_a","run_b",0.5)), 470,
-                          pose_mix("run_a", "run_b", 0.5+0.5*math.sin(ph)),
-                          t=t, mood="angry", look=0.5, band=True)
+        bob = abs(math.sin(ph))*18                      # отрыв от земли в беге
+        inf = hero(im, cam, stand_on(960, 780 - bob, 470,
+                                     pose_mix("run_a", "run_b", 0.5)), 470,
+                   pose_mix("run_a", "run_b", 0.5+0.5*math.sin(ph)),
+                   t=t, mood="angry", look=0.5, band=True)
         day_badge(d, 3)
 
     elif inside(t, "push1"):
@@ -376,8 +378,8 @@ def frame(i):
         cam = Cam(1.0, hero_x + 140, hero_y - 250)
         rd.stairs(im, d, cam, t, shift=0)
         inf = hero(im, cam, stand_on(hero_x, hero_y, 455, "climb"), 455,
-                          pose_mix("climb", "stand", 0.5+0.5*math.sin(ph*math.pi)),
-                          t=t, mood="angry", look=0.5, band=True)
+                   pose_mix("climb", "climb2", 0.5+0.5*math.sin(ph*math.pi)),
+                   t=t, mood="angry", look=0.4, band=True)
         soft_ellipse(im, *cam.p(hero_x, hero_y-6), cam.r(90), cam.r(14), (0, 0, 0), 0.45)
         day_badge(d, 270)
         # Демон стоит выше по лестнице и преграждает. Когда герой доходит до

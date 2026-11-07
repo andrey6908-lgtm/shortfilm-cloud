@@ -401,10 +401,10 @@ POSES.update({
                     ua_l=62, fa_l=120, ua_r=60, fa_r=124, lean=-62, head=26, hip_y=0.05),
  # бег: шаг, корпус подан вперёд, руки работают встречно
  # бег: локти согнуты и работают противоходом, колено ведущей ноги высоко
- "run_a":      dict(thigh_l=54, shin_l=112, thigh_r=124, shin_r=62,
-                    ua_l=146, fa_l=52, ua_r=38, fa_r=128, lean=18, head=-10, hip_y=0.0),
- "run_b":      dict(thigh_l=122, shin_l=64, thigh_r=56, shin_r=110,
-                    ua_l=36, fa_l=126, ua_r=148, fa_r=54, lean=18, head=-10, hip_y=0.0),
+ "run_a":      dict(thigh_l=36, shin_l=118, thigh_r=140, shin_r=70,
+                    ua_l=162, fa_l=40, ua_r=22, fa_r=140, lean=24, head=-12, hip_y=-0.03),
+ "run_b":      dict(thigh_l=138, shin_l=72, thigh_r=38, shin_r=116,
+                    ua_l=24, fa_l=138, ua_r=164, fa_r=42, lean=24, head=-12, hip_y=-0.03),
  # бокс: стойка с руками у лица и прямой правой
  # бокс: стойка и УДАР ВЫПАДОМ — корпус подан, задняя нога распрямлена
  "guard":      dict(thigh_l=106, shin_l=92, thigh_r=72, shin_r=88,
@@ -412,8 +412,10 @@ POSES.update({
  "punch":      dict(thigh_l=58, shin_l=96, thigh_r=132, shin_r=120,
                     ua_l=124, fa_l=-50, ua_r=2,  fa_r=0,   lean=20, head=-4, hip_y=0.06),
  # подъём по лестнице: ведущая нога высоко, корпус вперёд
- "climb":      dict(thigh_l=44, shin_l=96, thigh_r=98, shin_r=92,
-                    ua_l=66, fa_l=36, ua_r=118, fa_r=128, lean=14, head=-6, hip_y=0.0),
+ "climb":      dict(thigh_l=38, shin_l=104, thigh_r=104, shin_r=94,
+                    ua_l=-28, fa_l=-14, ua_r=128, fa_r=96, lean=30, head=-18, hip_y=0.04),
+ "climb2":     dict(thigh_l=100, shin_l=96, thigh_r=36, shin_r=108,
+                    ua_l=124, fa_l=98, ua_r=-24, fa_r=-10, lean=30, head=-18, hip_y=0.04),
  # подъём гантелей на бицепс
  "curl_dn":    dict(thigh_l=100, shin_l=92, thigh_r=80, shin_r=88,
                     ua_l=96, fa_l=92, ua_r=84, fa_r=88, lean=2, head=0, hip_y=0.0),
