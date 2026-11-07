@@ -113,7 +113,7 @@ def city(im, d, cam, t=0.0, pan=0.0):
                 for cx_ in range(cols):
                     ph = win_rr.random()*9.0
                     per = 7.0 + win_rr.random()*16.0
-                    on = ((t/per + ph) % 1.0) > 0.42        # окно живёт своим циклом
+                    on = ((t/per + ph) % 1.0) > 0.58        # окно живёт своим циклом
                     if not on: continue
                     wx = bx + 14 + cx_*(w_-24)/max(1, cols-1) * 0.92
                     wy = gy - h_ + 22 + cy_*62
@@ -128,8 +128,8 @@ def city(im, d, cam, t=0.0, pan=0.0):
         lx = 60 + i*330 - pan*0.95
         if lx < -220 or lx > 2200: continue
         line(d, cam, [(lx, ground), (lx, ground-262), (lx+58, ground-276)], LINE, 2.8)
-        fl = 0.26 + 0.07*math.sin(t*3.1 + i*1.7)              # фонарь подрагивает
-        add_glow(im, *cam.p(lx+58, ground-272), cam.r(230), (255, 206, 142), fl, 2.2)
+        fl = 0.34 + 0.08*math.sin(t*3.1 + i*1.7)              # фонарь подрагивает
+        add_glow(im, *cam.p(lx+58, ground-272), cam.r(300), (255, 206, 142), fl, 2.6)
         soft_ellipse(im, *cam.p(lx+58, ground-6), cam.r(190), cam.r(26),
                      (255, 196, 128), 0.12)
     add_glow(im, *cam.p(1680 - pan*0.10, 180), cam.r(240), (176, 196, 236), 0.16, 2.6)

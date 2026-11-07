@@ -17,7 +17,7 @@ from rooms import _w, rrect, line as rline
 import rooms_disc as rd
 import vecman as vm
 from people2 import *
-from render3 import phone_at          # телефон в руке — общий с первым фильмом
+from render3 import phone_at, bed_cover          # телефон в руке — общий с первым фильмом
 from PIL import Image
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frames_disc")
@@ -118,8 +118,8 @@ def frame(i):
         l = lt(t, "sleep")
         cam = Cam(lerp(1.10, 1.20, smoother(l/7)), 820, 690)
         bedroom(im, d, cam, t, clock_text="5:00", rain=False)
-        hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired",
-                    look=0.2, **HERO)
+        hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired", look=0.2)
+        bed_cover(d, cam)
         add_glow(im, *cam.p(206, 668), cam.r(210), RED, 0.40*flicker(t, 9.0), 2.4)
         whisper(d, L["w0"], t, 7.4, hold=3.2, size=46, at=(1020, 300))
 
@@ -128,7 +128,8 @@ def frame(i):
         l = lt(t, "over")
         cam = Cam(1.22, 300, 660)
         bedroom(im, d, cam, t, clock_text="5:08" if l < 2.4 else "7:40", rain=False)
-        hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired", **HERO)
+        hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired")
+        bed_cover(d, cam)
         for k in range(2):
             yy = 470 - k*52 - (l*8) % 40
             d.text(cam.p(840+k*26, yy), "z", font=FI(30+k*10), fill=(196, 204, 222, 150))
@@ -173,7 +174,8 @@ def frame(i):
         elif k == 1:
             cam = Cam(1.26, 760, 700)
             bedroom(im, d, cam, t, clock_text="4:12", rain=False)
-            hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired", **HERO)
+            hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired")
+            bed_cover(d, cam)
             day_badge(d, 200, mark="skip")
         elif k == 2:
             cam = Cam(1.14, 940, 700); rd.desk_night(im, d, cam, t, lamp=0.6)
