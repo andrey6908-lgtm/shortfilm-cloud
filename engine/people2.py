@@ -29,6 +29,22 @@ def capsule(d, cam, p0, p1, r, fill, alpha=255):
     for p in (p0, p1):
         d.ellipse(cam.box(p[0]-r, p[1]-r, p[0]+r, p[1]+r), fill=fill+(alpha,))
 
+def trapezoid(d, cam, p0, p1, r0, r1, fill, alpha=255):
+    """Туловище: ширина r0 у таза, r1 у плеч, углы скруглены.
+
+    Рисуется по нормали к оси «таз → плечи», поэтому работает в любой позе —
+    стоя, сидя и лёжа (07.11).
+    """
+    vx, vy = p1[0]-p0[0], p1[1]-p0[1]
+    ln = math.hypot(vx, vy) or 1.0
+    nx, ny = -vy/ln, vx/ln
+    pts = [(p0[0]+nx*r0, p0[1]+ny*r0), (p1[0]+nx*r1, p1[1]+ny*r1),
+           (p1[0]-nx*r1, p1[1]-ny*r1), (p0[0]-nx*r0, p0[1]-ny*r0)]
+    d.polygon([cam.p(*q) for q in pts], fill=fill + (alpha,))
+    ellipse_at(d, cam, p0, r0, r0, fill, alpha)      # скруглить таз
+    ellipse_at(d, cam, p1, r1, r1, fill, alpha)      # и плечи
+
+
 def ellipse_at(d, cam, c, rx, ry, fill, alpha=255):
     d.ellipse(cam.box(c[0]-rx, c[1]-ry, c[0]+rx, c[1]+ry), fill=fill+(alpha,))
 
@@ -109,14 +125,16 @@ def draw_person(im, d, cam, hip, h, pose, t=0.0, seed=0.0, skin=CREAM,
     hr = h*0.150
 
     lean = pose["lean"]*f
-    sh_c = _add((hx, hy0), _rot(-90+lean, tl))
+    axis = -90 + lean                      # угол оси корпуса: таз → плечи
+    nrm = _rot(axis + 90, 1.0)             # единичная нормаль к этой оси
+    sh_c = _add((hx, hy0), _rot(axis, tl))
     head_c = _add(sh_c, _rot(-90+lean+pose["head"]*f, hr*1.02))
 
     legs, arms = [], []
     for side, (ta, sa) in (("l", (pose["thigh_l"], pose["shin_l"])),
                            ("r", (pose["thigh_r"], pose["shin_r"]))):
-        off = (-1 if side == "l" else 1)*tw*0.40*f
-        hip_p = (hx+off, hy0)
+        off = (-1 if side == "l" else 1)*tw*0.46*f
+        hip_p = (hx + nrm[0]*off, hy0 + nrm[1]*off)
         knee = _add(hip_p, _rot(ta if not flip else 180-ta, L_th))
         ankle = _add(knee, _rot(sa if not flip else 180-sa, L_sh))
         legs.append(("c", hip_p, knee, r_leg))
@@ -124,21 +142,30 @@ def draw_person(im, d, cam, hip, h, pose, t=0.0, seed=0.0, skin=CREAM,
         legs.append(("e", (ankle[0]+f*h*0.015, ankle[1]+h*0.008), h*0.036, h*0.021))
     for side, (ua, fa) in (("l", (pose["ua_l"], pose["fa_l"])),
                            ("r", (pose["ua_r"], pose["fa_r"]))):
-        off = (-1 if side == "l" else 1)*tw*0.86*f
-        sp = (sh_c[0]+off, sh_c[1]+h*0.016)
+        off = (-1 if side == "l" else 1)*tw*0.92*f
+        # плечо отходит от оси по нормали и чуть опускается ВДОЛЬ корпуса,
+        # а не по экранной вертикали — иначе в лежачей позе оно в голове
+        along = _rot(axis, -h*0.022)
+        sp = (sh_c[0] + nrm[0]*off + along[0], sh_c[1] + nrm[1]*off + along[1])
         elbow = _add(sp, _rot(ua if not flip else 180-ua, L_ua))
         hand = _add(elbow, _rot(fa if not flip else 180-fa, L_fa))
         arms.append(("c", sp, elbow, r_arm))
         arms.append(("c", elbow, hand, r_arm*0.92))
         arms.append(("e", hand, h*0.040, h*0.040))
 
-    torso = [("c", (hx, hy0), sh_c, tw)]
+    tw_top, tw_bot = tw*1.42, tw*0.92      # плечи шире таза — силуэт читается
+    torso = [("t", (hx, hy0), sh_c, (tw_bot, tw_top))]
     head = [("e", head_c, hr, hr*1.08)]
 
     def paint(group, grow, col, a):
         for it in group:
-            if it[0] == "c": capsule(d, cam, it[1], it[2], it[3]+grow, col, a)
-            else: ellipse_at(d, cam, it[1], it[2]+grow, it[3]+grow, col, a)
+            if it[0] == "c":
+                capsule(d, cam, it[1], it[2], it[3]+grow, col, a)
+            elif it[0] == "t":
+                lo, hi = it[3]
+                trapezoid(d, cam, it[1], it[2], lo+grow, hi+grow, col, a)
+            else:
+                ellipse_at(d, cam, it[1], it[2]+grow, it[3]+grow, col, a)
 
     body_col = cloth or skin
     for grp, col in ((legs, body_col), (torso, body_col)):

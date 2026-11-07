@@ -1,1 +1,1 @@
-{"name": "DISCIPLINA_RU_v1", "mode": "full", "frames": [], "dur": 158.0, "fps": 30, "shards": 10, "lang": "ru", "tone": "ru", "mirror": "0", "speed": "1", "cam": "none", "film": "render_disc", "stamp": "2026-11-07T07:50:47Z"}
+{"name": "fix-anat", "mode": "preview", "frames": [300,560,1300,1700,2000,2300,2600,3100,3480,4100], "dur": 158.0, "fps": 30, "shards": 1, "lang": "ru", "tone": "ru", "mirror": "0", "speed": "1", "cam": "none", "film": "render_disc", "stamp": "2026-11-07T09:24:00Z"}
