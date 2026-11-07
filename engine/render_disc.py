@@ -307,10 +307,10 @@ def frame(i):
 
     elif inside(t, "tread"):                                 # ДЕНЬ 96 — дорожка
         l = lt(t, "tread")
-        cam = Cam(lerp(1.00, 1.09, smoother(l/6)), 960, 700)
+        cam = Cam(lerp(0.98, 1.06, smoother(l/6)), 960, 640)
         rd.treadmill(im, d, cam, t, x=960, floor=980, speed=1.0)
         ph = l*4.2
-        inf = hero(im, cam, (900, 946), 440,
+        inf = hero(im, cam, (930, 760), 430,
                    pose_mix("run_a", "run_b", 0.5+0.5*math.sin(ph)),
                    t=t, mood="angry", look=0.3, band=True)
         draw_demon(im, d, cam, (1560, 960), 170, "stand", t=t, alpha=140, heat=0.7)

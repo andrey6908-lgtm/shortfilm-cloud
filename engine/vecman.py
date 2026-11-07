@@ -123,7 +123,7 @@ def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
     cl2 = "#16161F" if dark else CLOTH2
     sle = "#1A1A24" if dark else SLEEVE
     pnt = "#14141C" if dark else PANTS
-    out = "#0A0A0E" if dark else OUTL
+    out = "#6A2630" if dark else OUTL
     sw_line = hr*0.17                    # толщина обводки от размера головы
 
     g = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" '
@@ -134,20 +134,21 @@ def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
          f'<g opacity="{alpha:.3f}" stroke-linecap="round">']
 
     def part(path, fill):
-        g.append(f'<path d="{path}" fill="{fill}"{_st(sw_line)}/>')
+        g.append(f'<path d="{path}" fill="{fill}" stroke="{out}" '
+                 f'stroke-width="{sw_line:.1f}" stroke-linejoin="round"/>')
 
     # порядок как у них: дальние конечности → корпус → ближние → голова
     part(legs[0], pnt)
-    g.append(_dot(feet[0][0], feet[0][1]) + f' fill="{sk}"{_st(sw_line)}/>')
+    g.append(_dot(feet[0][0], feet[0][1]) + f' fill="{sk}" stroke="{out}" stroke-width="{sw_line:.1f}"/>')
     part(arms[0], sle)
-    g.append(_dot(hands[0][0], hands[0][1]) + f' fill="{sk}"{_st(sw_line)}/>')
+    g.append(_dot(hands[0][0], hands[0][1]) + f' fill="{sk}" stroke="{out}" stroke-width="{sw_line:.1f}"/>')
     part(torso, "url(#cl)")
-    g.append(_dot(sh_scr, sw*0.80*k) + f' fill="url(#cl)"{_st(sw_line)}/>')
+    g.append(_dot(sh_scr, sw*0.80*k) + f' fill="url(#cl)" stroke="{out}" stroke-width="{sw_line:.1f}"/>')
     part(legs[1], pnt)
-    g.append(_dot(feet[1][0], feet[1][1]) + f' fill="{sk}"{_st(sw_line)}/>')
+    g.append(_dot(feet[1][0], feet[1][1]) + f' fill="{sk}" stroke="{out}" stroke-width="{sw_line:.1f}"/>')
     part(arms[1], sle)
-    g.append(_dot(hands[1][0], hands[1][1]) + f' fill="{sk}"{_st(sw_line)}/>')
-    g.append(_dot(head, hr) + f' fill="{sk}"{_st(sw_line*1.15)}/>')
+    g.append(_dot(hands[1][0], hands[1][1]) + f' fill="{sk}" stroke="{out}" stroke-width="{sw_line:.1f}"/>')
+    g.append(_dot(head, hr) + f' fill="{sk}" stroke="{out}" stroke-width="{sw_line*1.15:.1f}"/>')
 
     # ЛИЦО: глаза с веком, брови и рот — по ним читается состояние
     fc = "#2A2A36" if dark else FACE
