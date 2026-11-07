@@ -319,6 +319,9 @@ def draw_demon(im, d, cam, hip, h, pose, t=0.0, alpha=255, grin=1.0, flip=False,
     ink = (10, 9, 14)
     bx0, by0 = cam.p(hip[0]-h*0.55, hip[1]-h*0.80)
     bx1, by1 = cam.p(hip[0]+h*0.55, hip[1]+h*0.55)
+    # То же, что в film.demon: при зеркале края меняются местами и ореол
+    # схлопывается в полоску 8 px (поймано 07.11).
+    bx0, bx1 = min(bx0, bx1), max(bx0, bx1)
     pad = cam.r(h*0.12)
     X0, Y0 = bx0-pad, by0-pad
     LW, LH = max(8, int((bx1-bx0+pad*2)*SS)), max(8, int((by1-by0+pad*2)*SS))
