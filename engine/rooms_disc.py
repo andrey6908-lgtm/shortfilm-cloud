@@ -146,7 +146,7 @@ def heavy_bag(im, d, cam, t=0.0, hit=0.0, speed_lines=0.0, hero_x=900, floor=980
     бедная сцена». Поэтому мешок опущен к высоте груди, а вокруг появился зал:
     маты, гантели, стойка, окно с решёткой и лампа под потолком.
     """
-    bx = hero_x + 330
+    bx = hero_x + 285
     chest = floor - 300                     # грудь героя ростом 420 от пола
     sway = math.sin(t*2.2)*12 + hit*54
     x = bx + sway
@@ -170,9 +170,9 @@ def heavy_bag(im, d, cam, t=0.0, hit=0.0, speed_lines=0.0, hero_x=900, floor=980
     line(d, cam, [(hero_x-900, floor), (hero_x+900, floor)], LINE, 3.2)
     # подвес и сам мешок — центр на уровне груди
     line(d, cam, [(bx, 150), (x, chest-170)], LINE, 2.6, live=False)
-    d.rounded_rectangle(cam.box(x-82, chest-170, x+82, chest+200), radius=cam.r(66),
+    d.rounded_rectangle(cam.box(x-96, chest-205, x+96, chest+235), radius=cam.r(78),
                         fill=(132, 26, 32, 255))
-    d.rounded_rectangle(cam.box(x-82, chest-170, x+82, chest+200), radius=cam.r(66),
+    d.rounded_rectangle(cam.box(x-96, chest-205, x+96, chest+235), radius=cam.r(78),
                         outline=(228, 72, 70, 255), width=_w(cam, 3.0))
     for i in range(4):
         line(d, cam, [(x-74, chest-100+i*84), (x+74, chest-100+i*84)],
@@ -245,6 +245,9 @@ def summit(im, d, cam, t=0.0, k=1.0, rise=0.0):
     add_glow(im, sx, sy, int(460 + 180*rise), (255, 206, 128), 0.55 + 0.30*rise, 2.0)
     d.ellipse(cam.box(sx-70, sy-70, sx+70, sy+70), fill=(255, 230, 182, 255))
 
+    # ближний гребень с обрывом: линия края проходит под ногами героя
+    edge = [(-200, 1200), (-200, 980), (420, 930), (780, 880), (1010, 872),
+            (1180, 905), (1420, 1010), (1700, 1120), (2200, 1200)]
     for i, (yb, col) in enumerate(((700, (92, 54, 44)), (780, (58, 34, 32)),
                                    (860, (28, 18, 20)))):
         rr2 = random.Random(10+i)
@@ -256,6 +259,8 @@ def summit(im, d, cam, t=0.0, k=1.0, rise=0.0):
         pts.append((2200, 1200))
         c = tuple(int(v + (34 + i*8)*rise) for v in col)   # свет ползёт по склонам
         d.polygon([cam.p(*p) for p in pts], fill=c + (255,))
+    d.polygon([cam.p(*p) for p in edge], fill=(18, 12, 14, 255))
+    line(d, cam, edge[1:-1], (92, 62, 54), 3.0, 220)
 
 
 # --------------------------------------------------------- ЛУЧ И ВСПЫШКА
