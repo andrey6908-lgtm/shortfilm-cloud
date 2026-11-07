@@ -365,10 +365,10 @@ POSES.update({
  "pushup_dn":  dict(thigh_l=2,  shin_l=0,  thigh_r=-4, shin_r=-2,
                     ua_l=66, fa_l=118, ua_r=70, fa_r=114, lean=-84, head=14, hip_y=0.30),
  # бег: шаг, корпус подан вперёд, руки работают встречно
- "run_a":      dict(thigh_l=42, shin_l=4, thigh_r=138, shin_r=186,
-                    ua_l=146, fa_l=66, ua_r=38, fa_r=116, lean=20, head=-10, hip_y=0.0),
- "run_b":      dict(thigh_l=136, shin_l=184, thigh_r=44, shin_r=6,
-                    ua_l=36, fa_l=114, ua_r=148, fa_r=64, lean=20, head=-10, hip_y=0.0),
+ "run_a":      dict(thigh_l=66, shin_l=104, thigh_r=116, shin_r=56,
+                    ua_l=132, fa_l=74, ua_r=52, fa_r=108, lean=16, head=-8, hip_y=0.0),
+ "run_b":      dict(thigh_l=114, shin_l=58, thigh_r=68, shin_r=102,
+                    ua_l=50, fa_l=106, ua_r=134, fa_r=72, lean=16, head=-8, hip_y=0.0),
  # бокс: стойка с руками у лица и прямой правой
  "guard":      dict(thigh_l=104, shin_l=92, thigh_r=74, shin_r=86,
                     ua_l=112, fa_l=-48, ua_r=70, fa_r=-118, lean=4, head=2, hip_y=0.0),

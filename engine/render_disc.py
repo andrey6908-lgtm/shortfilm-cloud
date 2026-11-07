@@ -224,7 +224,7 @@ def frame(i):
         cam = Cam(1.0, 960, 620)
         hit = max(0.0, math.sin(l*2.6))**3
         rd.heavy_bag(im, d, cam, t, hit=hit, speed_lines=clamp((l-1.0)/2.0)*0.8)
-        inf = draw_person(im, d, cam, (780, 860), 420,
+        inf = draw_person(im, d, cam, (900, 860), 420,
                           pose_mix("guard", "punch", hit), t=t, mood="angry",
                           look=0.6, **HERO)
         _band(d, cam, inf)
@@ -244,12 +244,12 @@ def frame(i):
     # ---------------------------------------------------------- ПОСЛЕДНИЙ БОЙ
     elif inside(t, "climb"):
         l = lt(t, "climb")
-        cam = Cam(1.0, 960, 620)
         shift = l*60
-        rd.stairs(im, d, cam, t, shift=shift)
         ph = l*2.2
         hero_x = 760
         step_y = 980 - 92*int((hero_x - (-200 - shift*0.6))/150)   # ступень под ногами
+        cam = Cam(1.0, 960, step_y - 280)                          # камера идёт за ним
+        rd.stairs(im, d, cam, t, shift=shift)
         inf = draw_person(im, d, cam, (hero_x, step_y), 400,
                           pose_mix("climb", "stand", 0.5+0.5*math.sin(ph)),
                           t=t, mood="angry", look=0.5, **HERO)
