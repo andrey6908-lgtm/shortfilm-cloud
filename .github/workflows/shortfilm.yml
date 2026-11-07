@@ -151,6 +151,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - uses: actions/checkout@v4        # нужен engine/sound_disc.py
       - uses: actions/download-artifact@v4
         with:
           pattern: part-*
@@ -187,40 +188,50 @@ jobs:
           IN=mute.mp4
           OUT="${{ needs.setup.outputs.name }}.mp4"
           A=/tmp/assets/audio
+          FILM=${{ needs.setup.outputs.film }}
           DUR=$(python3 -c "print(${{ needs.setup.outputs.frames }}/${{ needs.setup.outputs.fps }})")
           SP=${{ needs.setup.outputs.speed }}
-          FILM=${{ needs.setup.outputs.film }}
           FADE=4.5
           FST=$(python3 -c "print(max(0.0, $DUR - $FADE))")
-          echo "фильм $FILM, длительность $DUR с, темп $SP"
           if [ "$FILM" = "render_disc" ]; then
-            # «ДИСЦИПЛИНА»: перелом ровно посередине, на 62-й секунде. До него —
-            # печальная тема и тиканье часов, после — приподнятая. Щелчок на
-            # кнопке будильника в момент решения, шорох на белой вспышке.
-            read M1_END M1_FADE M2_S TICK_END TICK_FADE M2_MS TICK_MS CLK_MS RST_MS < <(python3 -c "sp=float('$SP'); v=[63,59,62,38,34]; ms=[62,5,62.2,126.2]; print(' '.join(str(round(x*sp,3)) for x in v), ' '.join(str(int(round(x*sp*1000))) for x in ms))")
+            # «ДИСЦИПЛИНА»: эффект на каждое действие (у конкурента звук каждые
+            # 0,9 с, замер 07.11) + своя музыка: напряжённая до перелома,
+            # бодрая после. Дорожка эффектов собирается кодом по таблице сцен.
+            pip install --quiet --upgrade numpy
+            python3 engine/sound_disc.py "$A/fx" /tmp/fx.wav "$DUR"
+            "$FF" -nostdin -hide_banner -loglevel error -y \
+              -i "$IN" -i /tmp/fx.wav -stream_loop 2 -i "$A/fx/mus_dark.wav" \
+              -stream_loop 2 -i "$A/fx/mus_up.wav" \
+              -filter_complex "
+                [1:a]volume=0.85[fx];
+                [2:a]atrim=0:64,asetpts=N/SR/TB,afade=t=in:st=0:d=2,
+                     afade=t=out:st=60:d=4,volume=0.34[m1];
+                [3:a]atrim=0:98,asetpts=N/SR/TB,adelay=62000|62000,
+                     afade=t=in:st=62:d=2,volume=0.40[m2];
+                [fx][m1][m2]amix=inputs=3:duration=longest:normalize=0,
+                  apad,atrim=0:$DUR,loudnorm=I=-14:TP=-1.5:LRA=11,
+                  afade=t=out:st=$FST:d=$FADE[a]" \
+              -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k "$OUT"
           else
             read M1_END M1_FADE M2_S TICK_END TICK_FADE M2_MS TICK_MS CLK_MS RST_MS < <(python3 -c "sp=float('$SP'); v=[170,166,168,114,128]; ms=[168,18,133.6,148.9]; print(' '.join(str(round(x*sp,3)) for x in v), ' '.join(str(int(round(x*sp*1000))) for x in ms))")
+            M2_LEN=$(python3 -c "print(round(max(8.0, $DUR - $M2_S + 2), 3))")
+            "$FF" -nostdin -hide_banner -loglevel error -y \
+              -i "$IN" -stream_loop 3 -i "$A/golden_cage.mp3" -stream_loop 3 -i "$A/borderless.mp3" \
+              -stream_loop 20 -i "$A/clock_tick.mp3" -i "$A/mouse_click.mp3" -i "$A/whoosh.mp3" \
+              -filter_complex "
+                [1:a]atrim=0:$M1_END,asetpts=N/SR/TB,afade=t=in:st=0:d=2,
+                     afade=t=out:st=$M1_FADE:d=4,volume=0.42[m1];
+                [2:a]atrim=0:$M2_LEN,asetpts=N/SR/TB,adelay=$M2_MS|$M2_MS,
+                     afade=t=in:st=$M2_S:d=2.5,volume=0.50[m2];
+                [3:a]atrim=0:$TICK_END,asetpts=N/SR/TB,adelay=$TICK_MS|$TICK_MS,volume=0.30,
+                     afade=t=out:st=$TICK_FADE:d=4[tick];
+                [4:a]adelay=$CLK_MS|$CLK_MS,volume=0.85[clk];
+                [5:a]adelay=$RST_MS|$RST_MS,volume=0.55[rst];
+                [m1][m2][tick][clk][rst]amix=inputs=5:duration=longest:normalize=0,
+                  apad,atrim=0:$DUR,loudnorm=I=-14:TP=-1.5:LRA=11,
+                  afade=t=out:st=$FST:d=$FADE[a]" \
+              -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k "$OUT"
           fi
-          M2_LEN=$(python3 -c "print(round(max(8.0, $DUR - $M2_S + 2), 3))")
-          echo "музыка до $M1_END с, подъём со $M2_S с ($M2_LEN с), щелчок $CLK_MS мс, шорох $RST_MS мс"
-          # ГОЧА: Golden Cage 110,8 с — короче тёмной части, поэтому зациклен
-          # входом (-stream_loop 3). Без этого amix обрезал ролик до 110,8 с.
-          "$FF" -nostdin -hide_banner -loglevel error -y \
-            -i "$IN" -stream_loop 3 -i "$A/golden_cage.mp3" -stream_loop 3 -i "$A/borderless.mp3" \
-            -stream_loop 20 -i "$A/clock_tick.mp3" -i "$A/mouse_click.mp3" -i "$A/whoosh.mp3" \
-            -filter_complex "
-              [1:a]atrim=0:$M1_END,asetpts=N/SR/TB,afade=t=in:st=0:d=2,
-                   afade=t=out:st=$M1_FADE:d=4,volume=0.42[m1];
-              [2:a]atrim=0:$M2_LEN,asetpts=N/SR/TB,adelay=$M2_MS|$M2_MS,
-                   afade=t=in:st=$M2_S:d=2.5,volume=0.50[m2];
-              [3:a]atrim=0:$TICK_END,asetpts=N/SR/TB,adelay=$TICK_MS|$TICK_MS,volume=0.30,
-                   afade=t=out:st=$TICK_FADE:d=4[tick];
-              [4:a]adelay=$CLK_MS|$CLK_MS,volume=0.85[clk];
-              [5:a]adelay=$RST_MS|$RST_MS,volume=0.55[rst];
-              [m1][m2][tick][clk][rst]amix=inputs=5:duration=longest:normalize=0,
-                apad,atrim=0:$DUR,loudnorm=I=-14:TP=-1.5:LRA=11,
-                afade=t=out:st=$FST:d=$FADE[a]" \
-            -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k "$OUT"
           ls -la "$OUT"
 
       - name: Выложить релизом
