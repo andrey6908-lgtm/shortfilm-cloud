@@ -18,6 +18,7 @@
 import io, math
 import cairosvg
 from PIL import Image
+from film import breathe, blink
 
 # ПАЛИТРА. Взято лучшее из двух школ: пропорции и гладкий вектор — из
 # принятого прототипа, светлое тело с чёрной обводкой и живое лицо — из хита
@@ -64,7 +65,7 @@ def _st(w):
 
 
 def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
-              band=False, dark=False, alpha=1.0):
+              band=False, dark=False, alpha=1.0, t=0.0, seed=0.0):
     """SVG фигуры: скелет в мировых координатах, проекция камерой."""
     P = cam.p
     f = -1 if flip else 1
@@ -77,12 +78,16 @@ def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
     r_leg, r_arm = hr*0.40, hr*0.34
 
     world = {}
-    hx, hy = hip[0], hip[1] + pose.get("hip_y", 0.0)*h
+    # ЖИЗНЬ: тело дышит, голова чуть качается. Без этого фигура мёртвая —
+    # его слово 07.11: «не моргает, бровью никто не ведёт, динамики нет».
+    br = breathe(t, 4.6, h*0.006, seed*2.0)
+    nod = breathe(t, 6.1, 1.6, seed*3.7)          # наклон головы, градусы
+    hx, hy = hip[0], hip[1] + pose.get("hip_y", 0.0)*h + br
     lean = pose["lean"]*f
     axis = -90 + lean
     nrm = _rot(axis + 90, 1.0)
     sh_c = _add((hx, hy), _rot(axis, h*0.325))
-    head = _add(sh_c, _rot(axis + pose["head"]*f, hr_w*0.82))
+    head = _add(sh_c, _rot(axis + pose["head"]*f + nod*f, hr_w*0.82))
 
     legs, arms, hands, feet = [], [], [], []
     for side, (ta, sa) in (("l", (pose["thigh_l"], pose["shin_l"])),
@@ -153,19 +158,23 @@ def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
     # ЛИЦО: глаза с веком, брови и рот — по ним читается состояние
     fc = "#2A2A36" if dark else FACE
     ex, ey = hr*0.34, hr*0.06
-    dx = look*hr*0.11*f
+    gaze = breathe(t, 5.3, 0.26, seed*5.1)        # взгляд живёт, а не замер
+    dx = (look + gaze)*hr*0.11*f
     lid = {"tired": 0.52, "sad": 0.40, "wired": 0.0}.get(mood, 0.18)
-    eh = hr*0.30*(1.0 - lid*0.55)
+    bl = blink(t, seed)                            # 0 открыт, 1 закрыт
+    lid = min(0.96, lid + bl*(1.0 - lid))
+    eh = hr*0.30*(1.0 - lid*0.92)
     for s_ in (-1, 1):
         cxe = head[0] + s_*ex + dx
         cye = head[1] + ey + hr*lid*0.10
         g.append(f'<ellipse cx="{cxe:.1f}" cy="{cye:.1f}" rx="{hr*0.155:.1f}" '
                  f'ry="{eh/2:.1f}" fill="{fc}"/>')
-        if lid > 0.3:                       # усталое веко — полоска поверх глаза
+        if lid > 0.3:                       # веко: усталость и момент моргания
             g.append(f'<path d="M {cxe-hr*0.19:.1f} {cye-eh*0.42:.1f} '
                      f'h {hr*0.38:.1f}" stroke="{fc}" stroke-width="{hr*0.10:.1f}" '
                      f'fill="none"/>')
-    brow_y = head[1] - hr*0.30
+    # брови ходят: подрагивают всё время и подскакивают на моргании
+    brow_y = head[1] - hr*0.30 + breathe(t, 3.1, hr*0.035, seed*9.4) - bl*hr*0.06
     for s_ in (-1, 1):
         x0 = head[0] + s_*ex - hr*0.21 + dx
         tilt = {"angry": 0.20, "sad": -0.15, "tired": -0.09, "wired": 0.10}.get(mood, 0.0)
@@ -180,9 +189,15 @@ def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
                      f'stroke="{fc}" stroke-width="{hr*0.105:.1f}" fill="none"/>')
     mw = hr*0.42
     mouth = {"angry": -hr*0.10, "sad": hr*0.12}.get(mood, 0.0)
-    g.append(f'<path d="M {head[0]-mw/2:.1f} {head[1]+hr*0.46:.1f} '
-             f'q {mw/2:.1f} {mouth:.1f} {mw:.1f} 0" stroke="{fc}" '
-             f'stroke-width="{hr*0.09:.1f}" fill="none"/>')
+    # на усилии рот приоткрывается в такт движению
+    effort = max(0.0, breathe(t, 1.15, 1.0, seed*2.9)) if mood == "angry" else 0.0
+    if effort > 0.45:
+        g.append(f'<ellipse cx="{head[0]:.1f}" cy="{head[1]+hr*0.48:.1f}" '
+                 f'rx="{mw*0.42:.1f}" ry="{hr*(0.06+0.09*effort):.1f}" fill="{fc}"/>')
+    else:
+        g.append(f'<path d="M {head[0]-mw/2:.1f} {head[1]+hr*0.46:.1f} '
+                 f'q {mw/2:.1f} {mouth:.1f} {mw:.1f} 0" stroke="{fc}" '
+                 f'stroke-width="{hr*0.09:.1f}" fill="none"/>')
     if band:
         bx0 = head[0]-hr*1.06
         g.append(f'<path d="M {bx0:.1f} {head[1]-hr*0.52:.1f} '
@@ -207,14 +222,14 @@ class _SS:
 
 
 def draw_vecman(im, cam, hip, h, pose, t=0.0, mood="neutral", look=0.0,
-                flip=False, band=False, dark=False, alpha=1.0, ss=2):
+                flip=False, band=False, dark=False, alpha=1.0, ss=2, seed=0.0):
     """Нарисовать векторного персонажа прямо в кадр движка."""
     from people2 import POSES
     if isinstance(pose, str): pose = POSES[pose]
     W, H = im.width, im.height
     svg, head, hr, world = build_svg(W, H, _SS(cam, ss), hip, h, pose, flip=flip,
                                      mood=mood, look=look, band=band, dark=dark,
-                                     alpha=alpha)
+                                     alpha=alpha, t=t, seed=seed)
     png = cairosvg.svg2png(bytestring=svg.encode(), output_width=W, output_height=H)
     im.alpha_composite(Image.open(io.BytesIO(png)).convert("RGBA"), (0, 0))
     return dict(head=world["head"], hr=hr/ss,
