@@ -354,3 +354,30 @@ def draw_demon(im, d, cam, hip, h, pose, t=0.0, alpha=255, grin=1.0, flip=False,
         add_glow(im, *cam.p(hc[0], hc[1]+hr*0.40), cam.r(hr*0.9), MAG,
                  0.28*(alpha/255)*heat*flicker(t, 0.73, 0.26, 0.62), 2.0)
     return info
+
+# --- позы «ДИСЦИПЛИНЫ» (07.11). Углы в той же системе: -90 вверх, 0 вправо,
+#     90 вниз, 180 влево; lean добавляется к корпусу, который базово идёт вверх.
+POSES.update({
+ # упор лёжа: корпус горизонтален головой влево, руки отвесно в пол,
+ # ноги прямой линией назад
+ "pushup_up":  dict(thigh_l=2,  shin_l=0,  thigh_r=-4, shin_r=-2,
+                    ua_l=88, fa_l=92, ua_r=92, fa_r=88, lean=-80, head=10, hip_y=0.20),
+ "pushup_dn":  dict(thigh_l=2,  shin_l=0,  thigh_r=-4, shin_r=-2,
+                    ua_l=66, fa_l=118, ua_r=70, fa_r=114, lean=-84, head=14, hip_y=0.30),
+ # бег: шаг, корпус подан вперёд, руки работают встречно
+ "run_a":      dict(thigh_l=58, shin_l=24, thigh_r=124, shin_r=152,
+                    ua_l=128, fa_l=62, ua_r=56, fa_r=120, lean=10, head=-4, hip_y=0.0),
+ "run_b":      dict(thigh_l=122, shin_l=150, thigh_r=60, shin_r=26,
+                    ua_l=54, fa_l=118, ua_r=130, fa_r=60, lean=10, head=-4, hip_y=0.0),
+ # бокс: стойка с руками у лица и прямой правой
+ "guard":      dict(thigh_l=104, shin_l=92, thigh_r=74, shin_r=86,
+                    ua_l=112, fa_l=-48, ua_r=70, fa_r=-118, lean=4, head=2, hip_y=0.0),
+ "punch":      dict(thigh_l=108, shin_l=94, thigh_r=72, shin_r=84,
+                    ua_l=114, fa_l=-46, ua_r=4,  fa_r=2,   lean=8, head=0, hip_y=0.0),
+ # подъём по лестнице: ведущая нога высоко, корпус вперёд
+ "climb":      dict(thigh_l=44, shin_l=96, thigh_r=98, shin_r=92,
+                    ua_l=66, fa_l=36, ua_r=118, fa_r=128, lean=14, head=-6, hip_y=0.0),
+ # сидит обхватив колени — «дно»
+ "curl":       dict(thigh_l=16, shin_l=132, thigh_r=12, shin_r=128,
+                    ua_l=30, fa_l=120, ua_r=24, fa_r=126, lean=16, head=18, hip_y=0.10),
+})

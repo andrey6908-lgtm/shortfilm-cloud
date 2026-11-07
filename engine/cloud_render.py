@@ -18,7 +18,10 @@ import os, sys, time, multiprocessing as mp
 def main():
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     a, b = int(sys.argv[1]), int(sys.argv[2])
-    import render3
+    # Фильмов в движке больше одного: SHORTFILM_FILM выбирает раскадровку
+    # (render3 — «ЛЕНТА vs ЖИЗНЬ», render_disc — «ДИСЦИПЛИНА»).
+    import importlib
+    render3 = importlib.import_module(os.environ.get("SHORTFILM_FILM", "render3"))
     if len(sys.argv) > 3:
         render3.OUT = sys.argv[3]
     os.makedirs(render3.OUT, exist_ok=True)

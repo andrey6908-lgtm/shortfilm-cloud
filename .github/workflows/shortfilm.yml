@@ -45,6 +45,7 @@ jobs:
       mirror: ${{ steps.job.outputs.mirror }}
       speed:  ${{ steps.job.outputs.speed }}
       cam:    ${{ steps.job.outputs.cam }}
+      film:   ${{ steps.job.outputs.film }}
       list:   ${{ steps.job.outputs.list }}
     steps:
       - uses: actions/checkout@v4
@@ -67,6 +68,7 @@ jobs:
           print("mirror=" + str(j.get("mirror", "0")))
           print("speed=" + str(j.get("speed", "1")))
           print("cam=" + j.get("cam", "none"))
+          print("film=" + j.get("film", "render3"))
           print("list=" + json.dumps(list(range(n))))
           PY
       - run: |
@@ -113,6 +115,7 @@ jobs:
           SHORTFILM_MIRROR: ${{ needs.setup.outputs.mirror }}
           SHORTFILM_SPEED: ${{ needs.setup.outputs.speed }}
           SHORTFILM_CAM: ${{ needs.setup.outputs.cam }}
+          SHORTFILM_FILM: ${{ needs.setup.outputs.film }}
         run: |
           total=${{ needs.setup.outputs.frames }}
           n=${{ needs.setup.outputs.shards }}
@@ -248,6 +251,7 @@ jobs:
           SHORTFILM_MIRROR: ${{ needs.setup.outputs.mirror }}
           SHORTFILM_SPEED: ${{ needs.setup.outputs.speed }}
           SHORTFILM_CAM: ${{ needs.setup.outputs.cam }}
+          SHORTFILM_FILM: ${{ needs.setup.outputs.film }}
         run: |
           cd engine
           python3 preview.py "${{ needs.setup.outputs.frames_list }}" "$PWD/preview"
@@ -285,6 +289,7 @@ jobs:
           SHORTFILM_MIRROR: ${{ needs.setup.outputs.mirror }}
           SHORTFILM_SPEED: ${{ needs.setup.outputs.speed }}
           SHORTFILM_CAM: ${{ needs.setup.outputs.cam }}
+          SHORTFILM_FILM: ${{ needs.setup.outputs.film }}
         run: |
           cd engine
           python3 thumb.py "$PWD/thumb"

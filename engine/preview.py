@@ -8,7 +8,9 @@
 """
 import os, sys, time
 from PIL import Image, ImageDraw, ImageFont
-import render3, film
+import importlib
+render3 = importlib.import_module(os.environ.get("SHORTFILM_FILM", "render3"))
+import film
 
 nums = [int(x) for x in sys.argv[1].split(",") if x.strip()]
 out = sys.argv[2] if len(sys.argv) > 2 else "preview"
