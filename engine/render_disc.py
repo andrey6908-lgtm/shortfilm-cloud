@@ -65,8 +65,8 @@ def caption(d, im, text, alpha, y=BOT, size=52, bold=False, col=CREAM):
 def day_badge(d, n, alpha=1.0):
     """Счётчик дней в левом верхнем углу — главный приём фильма."""
     if alpha <= 0.004: return
-    f = FH(30)
-    d.text((72, 78), f'{L["day"]} {n}', font=f, fill=(206, 212, 226, int(230*alpha)))
+    f = FH(46)
+    d.text((76, 76), f'{L["day"]} {n}', font=f, fill=(232, 236, 246, int(240*alpha)))
 
 
 def whisper(d, text, t, t0, hold=3.0, size=46, at=(0, 0), type_dur=1.3):
@@ -96,7 +96,7 @@ def frame(i):
         draw_person(im, d, cam, (700, 790), 430, "lie", t=t, mood="tired",
                     look=0.2, **HERO)
         if ring:
-            add_glow(im, *cam.p(612, 606), cam.r(190), RED, 0.34*flicker(t, 9.0), 2.4)
+            add_glow(im, *cam.p(206, 668), cam.r(190), RED, 0.34*flicker(t, 9.0), 2.4)
         if 3.4 < l < 8.0:
             whisper(d, L["snooze"], t, S["sleep"][0]+3.6, hold=3.0, size=44, at=(980, 300))
         for k in range(2):                                   # «z z» над головой
@@ -114,7 +114,7 @@ def frame(i):
                           mood="wired", look=0.4, lit=0.8, **HERO)
         phone_at(im, d, cam, inf["hand_r"], 54, 1.0, l*1.4)
         dem = draw_demon(im, d, cam, (1290, 846), 430, "stand", t=t,
-                         alpha=fade(t, 17.0, 24, 1.6, 0.01), heat=0.95)
+                         alpha=int(255*fade(t, 17.0, 24, 1.6, 0.01)), heat=0.95)
         day_badge(d, 1)
         whisper(d, L["w1"], t, 17.6, hold=2.4, at=(1180, 300))
         whisper(d, L["w2"], t, 20.6, hold=2.6, at=(1140, 360))
@@ -126,7 +126,7 @@ def frame(i):
         inf = draw_person(im, d, cam, (900, 870), 420, "sit_chair", t=t,
                           mood="tired", look=0.3, lit=0.9, **HERO)
         dem = draw_demon(im, d, cam, (560, 880), 440, "reach", t=t,
-                         alpha=fade(t, 25.0, 32, 1.6, 0.01), heat=1.0)
+                         alpha=int(255*fade(t, 25.0, 32, 1.6, 0.01)), heat=1.0)
         day_badge(d, 47)
         whisper(d, L["w3"], t, 25.8, hold=3.0, at=(430, 330))
 
@@ -144,7 +144,7 @@ def frame(i):
         cam = Cam(1.26, 760, 700)
         bedroom(im, d, cam, t, clock_text="5:00", rain=False)
         draw_person(im, d, cam, (700, 790), 430, "lie", t=t, mood="tired", **HERO)
-        add_glow(im, *cam.p(612, 606), cam.r(200), RED, 0.40*flicker(t, 11.0), 2.4)
+        add_glow(im, *cam.p(206, 668), cam.r(200), RED, 0.40*flicker(t, 11.0), 2.4)
         day_badge(d, 340)
 
     # ------------------------------------------------------------ ЗЕРКАЛО
@@ -178,10 +178,10 @@ def frame(i):
     elif inside(t, "alarm"):
         l = lt(t, "alarm")
         if l < 5.0:                                          # будильник крупно
-            cam = Cam(2.3, 612, 606)
+            sh = math.sin(t*34)*7*clamp((2.6-l)/2.6)
+            cam = Cam(2.6, 206+sh, 668)
             bedroom(im, d, cam, t, clock_text="5:00", rain=False)
-            sh = math.sin(t*34)*6*clamp((2.6-l)/2.6)
-            add_glow(im, *cam.p(612+sh, 606), cam.r(260), RED, 0.5, 2.2)
+            add_glow(im, *cam.p(206, 668), cam.r(300), RED, 0.55, 2.2)
         else:                                                # сел на кровати
             cam = Cam(1.16, 820, 700)
             bedroom(im, d, cam, t, clock_text="5:00", rain=False)
@@ -196,10 +196,10 @@ def frame(i):
         cam = Cam(1.0, 960, 560)
         rd.city(im, d, cam, t, pan=l*150)
         ph = l*3.4
-        draw_person(im, d, cam, (960, 760), 400,
-                    pose_mix("run_a", "run_b", 0.5+0.5*math.sin(ph)),
-                    t=t, mood="angry", look=0.5, **HERO)
-        _band(d, cam, (960, 760), 400, math.sin(ph))
+        inf = draw_person(im, d, cam, (960, 760), 400,
+                          pose_mix("run_a", "run_b", 0.5+0.5*math.sin(ph)),
+                          t=t, mood="angry", look=0.5, **HERO)
+        _band(d, cam, inf, math.sin(ph))
         day_badge(d, 3)
 
     elif inside(t, "push1"):
@@ -210,7 +210,7 @@ def frame(i):
         inf = draw_person(im, d, cam, (900, 900), 400,
                           pose_mix("pushup_up", "pushup_dn", k), t=t,
                           mood="angry", look=0.3, **HERO)
-        _band(d, cam, (900, 900), 400, 0, lie=True)
+        _band(d, cam, inf)
         day_badge(d, 12)
         if l > 4.0:                                          # счёт повторов
             n = 1 + int((l-4.0)*1.1)
@@ -224,10 +224,10 @@ def frame(i):
         cam = Cam(1.0, 960, 620)
         hit = max(0.0, math.sin(l*2.6))**3
         rd.heavy_bag(im, d, cam, t, hit=hit, speed_lines=clamp((l-1.0)/2.0)*0.8)
-        draw_person(im, d, cam, (780, 860), 420,
-                    pose_mix("guard", "punch", hit), t=t, mood="angry",
-                    look=0.6, **HERO)
-        _band(d, cam, (780, 860), 420, 0)
+        inf = draw_person(im, d, cam, (780, 860), 420,
+                          pose_mix("guard", "punch", hit), t=t, mood="angry",
+                          look=0.6, **HERO)
+        _band(d, cam, inf)
         day_badge(d, 64)
         whisper(d, L["w5"], t, 94.0, hold=2.6, size=52, at=(1420, 240))
 
@@ -236,9 +236,9 @@ def frame(i):
         cam = Cam(1.1, 960, 820)
         line(d, cam, [(200, 980), (1720, 980)], LINE, 3.2)
         k = 0.5+0.5*math.sin(l*3.6)
-        draw_person(im, d, cam, (900, 900), 400,
-                    pose_mix("pushup_up", "pushup_dn", k), t=t, mood="angry", **HERO)
-        _band(d, cam, (900, 900), 400, 0, lie=True)
+        inf = draw_person(im, d, cam, (900, 900), 400,
+                          pose_mix("pushup_up", "pushup_dn", k), t=t, mood="angry", **HERO)
+        _band(d, cam, inf)
         day_badge(d, 138)
 
     # ---------------------------------------------------------- ПОСЛЕДНИЙ БОЙ
@@ -247,10 +247,10 @@ def frame(i):
         cam = Cam(1.0, 960, 620)
         rd.stairs(im, d, cam, t, shift=l*60)
         ph = l*2.2
-        draw_person(im, d, cam, (760, 900 - l*22), 400,
-                    pose_mix("climb", "stand", 0.5+0.5*math.sin(ph)),
-                    t=t, mood="angry", look=0.5, **HERO)
-        _band(d, cam, (760, 900 - l*22), 400, math.sin(ph))
+        inf = draw_person(im, d, cam, (760, 900 - l*22), 400,
+                          pose_mix("climb", "stand", 0.5+0.5*math.sin(ph)),
+                          t=t, mood="angry", look=0.5, **HERO)
+        _band(d, cam, inf, math.sin(ph))
         day_badge(d, 270)
         if l > 4.0:                                          # рука демона сверху
             a = clamp((l-4.0)/1.2) * clamp((12.0-l)/1.5)
@@ -267,9 +267,9 @@ def frame(i):
         l = lt(t, "summit")
         cam = Cam(1.0, 960, 620)
         rd.summit(im, d, cam, t, k=1.0)
-        draw_person(im, d, cam, (900, 700), 300, "stand", t=t, mood="neutral",
-                    look=0.5, lit=1.0, **HERO)
-        _band(d, cam, (900, 700), 300, 0)
+        inf = draw_person(im, d, cam, (900, 700), 300, "stand", t=t, mood="neutral",
+                          look=0.5, lit=1.0, **HERO)
+        _band(d, cam, inf)
         rd.flash(im, clamp((1.2-l)/1.2)*0.9)
         caption(d, im, L["save_1"], fade(t, 130.0, 136.0, 1.0, 0.8), y=250)
         caption(d, im, L["save_2"], fade(t, 136.6, 141.6, 1.0, 0.8), y=250, bold=True)
@@ -318,12 +318,15 @@ def _sofa(im, d, cam, t):
     line(d, cam, [(200, 960), (1720, 960)], LINE, 3.0)
 
 
-def _band(d, cam, hip, h, ph, lie=False):
-    """Красная повязка на голове — знак второй половины фильма."""
-    hx = hip[0] + (h*0.10 if lie else 0)
-    hy = hip[1] - h*(0.52 if lie else 1.06)
-    r = h*0.115
-    d.line([cam.p(hx-r*1.15, hy-r*0.34), cam.p(hx+r*1.15, hy-r*0.34)],
-           fill=rd.RED_D + (255,), width=_w(cam, r*0.42))
-    d.line([cam.p(hx+r*0.9, hy-r*0.3), cam.p(hx+r*1.7, hy+r*0.3+ph*6)],
-           fill=rd.RED_D + (235,), width=_w(cam, r*0.26))
+def _band(d, cam, info, ph=0.0):
+    """Красная повязка на голове — знак второй половины фильма.
+
+    Кладётся по голове, которую ВЕРНУЛ draw_person: считать её положение
+    самому нельзя, оно зависит от позы (поймано 07.11 — повязка висела в
+    воздухе справа от бегущего).
+    """
+    hx, hy = info["head"]; r = info["hr"]
+    d.line([cam.p(hx-r*1.06, hy-r*0.30), cam.p(hx+r*1.06, hy-r*0.30)],
+           fill=rd.RED_D + (255,), width=_w(cam, r*0.40))
+    d.line([cam.p(hx+r*0.86, hy-r*0.26), cam.p(hx+r*1.62, hy+r*0.26+ph*7)],
+           fill=rd.RED_D + (235,), width=_w(cam, r*0.24))
