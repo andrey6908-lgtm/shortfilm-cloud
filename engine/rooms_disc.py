@@ -22,7 +22,7 @@ def mirror(im, d, cam, t=0.0, crack=0.0, glow_k=1.0):
     """
     cx, cy, rx, ry = 1260, 560, 170, 250
     # подставка
-    rrect(d, cam, (cx-190, cy+ry+10, cx+190, cy+ry+46), 14, FILLD + (255,), LINE, 3.0)
+    rrect(d, cam, (cx-190, cy+ry+10, cx+190, cy+ry+46), 14, FILLD, LINE, 3.0)
     # рама
     d.ellipse(cam.box(cx-rx-14, cy-ry-14, cx+rx+14, cy+ry+14), fill=FILLD + (255,))
     d.ellipse(cam.box(cx-rx-14, cy-ry-14, cx+rx+14, cy+ry+14),
@@ -62,7 +62,7 @@ def desk_night(im, d, cam, t=0.0, lamp=1.0):
     # стопка книг
     for i in range(3):
         rrect(d, cam, (x0+180, y0-26-i*22, x0+330, y0-6-i*22), 4,
-              mix(FILLD, (92, 70, 48), 0.5*lamp) + (255,), LINE, 2.4)
+              mix(FILLD, (92, 70, 48), 0.5*lamp), LINE, 2.4)
     # часы на стене
     ccx, ccy, cr = x0-180, y0-330, 44
     d.ellipse(cam.box(ccx-cr, ccy-cr, ccx+cr, ccy+cr), outline=LINE + (255,), width=_w(cam, 3.0))
