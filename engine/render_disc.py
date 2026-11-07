@@ -66,7 +66,7 @@ def day_badge(d, n, alpha=1.0):
     """Счётчик дней в левом верхнем углу — главный приём фильма."""
     if alpha <= 0.004: return
     f = FH(46)
-    d.text((76, 76), f'{L["day"]} {n}', font=f, fill=(232, 236, 246, int(240*alpha)))
+    d.text((80, 118), f'{L["day"]} {n}', font=f, fill=(232, 236, 246, int(240*alpha)))
 
 
 def whisper(d, text, t, t0, hold=3.0, size=46, at=(0, 0), type_dur=1.3):
@@ -229,7 +229,7 @@ def frame(i):
                           look=0.6, **HERO)
         _band(d, cam, inf)
         day_badge(d, 64)
-        whisper(d, L["w5"], t, 94.0, hold=2.6, size=52, at=(1420, 240))
+        whisper(d, L["w5"], t, 94.0, hold=2.6, size=52, at=(1320, 250))
 
     elif inside(t, "push2"):
         l = lt(t, "push2")
@@ -245,9 +245,12 @@ def frame(i):
     elif inside(t, "climb"):
         l = lt(t, "climb")
         cam = Cam(1.0, 960, 620)
-        rd.stairs(im, d, cam, t, shift=l*60)
+        shift = l*60
+        rd.stairs(im, d, cam, t, shift=shift)
         ph = l*2.2
-        inf = draw_person(im, d, cam, (760, 900 - l*22), 400,
+        hero_x = 760
+        step_y = 980 - 92*int((hero_x - (-200 - shift*0.6))/150)   # ступень под ногами
+        inf = draw_person(im, d, cam, (hero_x, step_y), 400,
                           pose_mix("climb", "stand", 0.5+0.5*math.sin(ph)),
                           t=t, mood="angry", look=0.5, **HERO)
         _band(d, cam, inf, math.sin(ph))
