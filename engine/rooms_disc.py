@@ -75,61 +75,123 @@ def desk_night(im, d, cam, t=0.0, lamp=1.0):
 
 # ------------------------------------------------------------ НОЧНОЙ ГОРОД
 _CITY = None
+_WIN = None
 def city(im, d, cam, t=0.0, pan=0.0):
-    """Силуэты домов и фонари — фон бега. Здания уезжают вместе с pan."""
-    global _CITY
+    """Ночной город в ТРИ плана с параллаксом, живыми окнами и фонарями.
+
+    Его слово 07.11: «окошки должны загораться, одно загорается, другое
+    гаснет, свет чуть ярче». Поэтому у каждого окна свой период и своя фаза —
+    город дышит, а не стоит картинкой. Планы расходятся с разной скоростью
+    (приём параллакса из лаборатории камеры, блок 1).
+    """
+    global _CITY, _WIN
     if _CITY is None:
         rr = random.Random(21)
-        _CITY = [(x, rr.uniform(140, 420), rr.uniform(120, 260), rr.random())
-                 for x in range(-400, 2600, 150)]
-    ground = 760
-    for x, h_, w_, seed in _CITY:
-        bx = x - pan*0.35
-        d.rectangle(cam.box(bx, ground-h_, bx+w_, ground), fill=(11, 13, 19, 255))
-        d.rectangle(cam.box(bx, ground-h_, bx+w_, ground), outline=LINE2 + (190,),
-                    width=_w(cam, 2.0))
-        rr2 = random.Random(int(seed*1000))
-        for k in range(int(h_/70)):                              # редкие окна
-            if rr2.random() < 0.45: continue
-            wx = bx + 18 + rr2.uniform(0, max(1, w_-46))
-            wy = ground - h_ + 26 + k*60
-            d.rectangle(cam.box(wx, wy, wx+22, wy+26), fill=(126, 112, 74, 170))
-    line(d, cam, [(-200, ground), (2300, ground)], LINE, 3.0)
-    for i in range(6):                                            # фонари
-        lx = 120 + i*380 - pan*0.8
-        line(d, cam, [(lx, ground), (lx, ground-250), (lx+54, ground-262)], LINE, 2.8)
-        add_glow(im, *cam.p(lx+54, ground-258), cam.r(170), (255, 206, 142), 0.34, 2.4)
+        _CITY = []
+        # (глубина, скорость, цвет, высоты) — дальний план почти стоит
+        for depth, k, col, hmin, hmax, step in (
+                (0, 0.18, (9, 11, 17), 220, 520, 190),
+                (1, 0.42, (12, 14, 21), 150, 400, 165),
+                (2, 0.82, (15, 17, 25), 110, 260, 145)):
+            row = [(x, rr.uniform(hmin, hmax), rr.uniform(110, 250), rr.random())
+                   for x in range(-600, 3000, step)]
+            _CITY.append((depth, k, col, row))
+        _WIN = random.Random(77)
+    ground = 780
+    win_rr = random.Random(99)
+    for depth, k, col, row in _CITY:
+        gy = ground - depth*26
+        for x, h_, w_, seed in row:
+            bx = x - pan*k
+            if bx > 2100 or bx + w_ < -200: continue
+            d.rectangle(cam.box(bx, gy-h_, bx+w_, gy), fill=col + (255,))
+            d.rectangle(cam.box(bx, gy-h_, bx+w_, gy),
+                        outline=LINE2 + (150 + depth*30,), width=_w(cam, 2.0))
+            cols = max(2, int(w_/62))
+            rows_n = max(2, int(h_/74))
+            for cy_ in range(rows_n):
+                for cx_ in range(cols):
+                    ph = win_rr.random()*9.0
+                    per = 7.0 + win_rr.random()*16.0
+                    on = ((t/per + ph) % 1.0) > 0.42        # окно живёт своим циклом
+                    if not on: continue
+                    wx = bx + 14 + cx_*(w_-24)/max(1, cols-1) * 0.92
+                    wy = gy - h_ + 22 + cy_*62
+                    if wy > gy - 26: continue
+                    warm = 0.6 + 0.4*math.sin(t*1.7 + ph*6)
+                    c = (int(214*warm) + 30, int(178*warm) + 24, int(96*warm) + 16)
+                    d.rectangle(cam.box(wx, wy, wx+24, wy+30), fill=c + (235,))
+                    if depth == 2 and ((t/per + ph) % 1.0) > 0.92:
+                        add_glow(im, *cam.p(wx+12, wy+15), cam.r(64), (255, 210, 130), 0.30, 2.4)
+    line(d, cam, [(-300, ground), (2400, ground)], LINE, 3.0)
+    for i in range(7):                                        # фонари ближнего плана
+        lx = 60 + i*330 - pan*0.95
+        if lx < -220 or lx > 2200: continue
+        line(d, cam, [(lx, ground), (lx, ground-262), (lx+58, ground-276)], LINE, 2.8)
+        fl = 0.42 + 0.10*math.sin(t*3.1 + i*1.7)              # фонарь подрагивает
+        add_glow(im, *cam.p(lx+58, ground-272), cam.r(230), (255, 206, 142), fl, 2.2)
+        soft_ellipse(im, *cam.p(lx+58, ground-6), cam.r(190), cam.r(26),
+                     (255, 196, 128), 0.20)
+    add_glow(im, *cam.p(1680 - pan*0.10, 180), cam.r(240), (176, 196, 236), 0.16, 2.6)
 
 
 # -------------------------------------------------------------- ГРУША
-def heavy_bag(im, d, cam, t=0.0, hit=0.0, speed_lines=0.0):
-    """Боксёрская груша. hit 0..1 — отдача после удара, искры у точки касания."""
-    bx, by = 1230, 400
-    sway = math.sin(t*2.2)*10 + hit*46
-    line(d, cam, [(bx, 40), (bx+sway*0.4, by-150)], LINE, 2.6, live=False)
+def heavy_bag(im, d, cam, t=0.0, hit=0.0, speed_lines=0.0, hero_x=900, floor=980):
+    """Груша на уровне груди героя + обстановка зала.
+
+    Его слово 07.11: «она как-то должна быть на уровне хотя бы его, очень
+    бедная сцена». Поэтому мешок опущен к высоте груди, а вокруг появился зал:
+    маты, гантели, стойка, окно с решёткой и лампа под потолком.
+    """
+    bx = hero_x + 330
+    chest = floor - 300                     # грудь героя ростом 420 от пола
+    sway = math.sin(t*2.2)*12 + hit*54
     x = bx + sway
-    d.rounded_rectangle(cam.box(x-78, by-150, x+78, by+250), radius=cam.r(62),
+    # лампа под потолком и её конус
+    line(d, cam, [(bx-40, 0), (bx-40, 120)], LINE, 2.4, live=False)
+    d.polygon([cam.p(bx-96, 120), cam.p(bx+16, 120), cam.p(bx+70, 190), cam.p(bx-150, 190)],
+              fill=FILLD + (255,))
+    add_glow(im, *cam.p(bx-40, 210), cam.r(420), (255, 212, 150), 0.26, 2.6)
+    # окно зала с решёткой
+    rrect(d, cam, (bx+300, chest-290, bx+660, chest+40), 10, (10, 12, 18), LINE2, 2.6)
+    for i in range(4):
+        line(d, cam, [(bx+300+i*90, chest-290), (bx+300+i*90, chest+40)], LINE2, 2.0, 170, live=False)
+    # маты у стены
+    for i in range(3):
+        rrect(d, cam, (hero_x-620+i*34, floor-150, hero_x-470+i*34, floor), 10, FILLD, LINE2, 2.4)
+    # гантели на полу
+    for gx in (hero_x-300, hero_x-220):
+        line(d, cam, [(gx-26, floor-16), (gx+26, floor-16)], LINE, 5.0, live=False)
+        d.ellipse(cam.box(gx-40, floor-32, gx-14, floor), fill=FILLD + (255,))
+        d.ellipse(cam.box(gx+14, floor-32, gx+40, floor), fill=FILLD + (255,))
+    line(d, cam, [(hero_x-900, floor), (hero_x+900, floor)], LINE, 3.2)
+    # подвес и сам мешок — центр на уровне груди
+    line(d, cam, [(bx, 150), (x, chest-170)], LINE, 2.6, live=False)
+    d.rounded_rectangle(cam.box(x-82, chest-170, x+82, chest+200), radius=cam.r(66),
                         fill=(132, 26, 32, 255))
-    d.rounded_rectangle(cam.box(x-78, by-150, x+78, by+250), radius=cam.r(62),
+    d.rounded_rectangle(cam.box(x-82, chest-170, x+82, chest+200), radius=cam.r(66),
                         outline=(228, 72, 70, 255), width=_w(cam, 3.0))
     for i in range(4):
-        line(d, cam, [(x-70, by-60+i*86), (x+70, by-60+i*86)], (176, 44, 48), 2.2, 200, live=False)
-    add_glow(im, *cam.p(x, by+40), cam.r(300), (226, 60, 56), 0.26 + 0.30*hit, 2.6)
-    if hit > 0.02:                                                # искры
+        line(d, cam, [(x-74, chest-100+i*84), (x+74, chest-100+i*84)],
+             (176, 44, 48), 2.2, 200, live=False)
+    add_glow(im, *cam.p(x, chest), cam.r(330), (226, 60, 56), 0.24 + 0.32*hit, 2.6)
+    soft_ellipse(im, *cam.p(x, floor-10), cam.r(130), cam.r(24), (0, 0, 0), 0.55)
+    if hit > 0.02:
         rr = random.Random(int(t*30))
-        for i in range(14):
-            a = rr.uniform(-1.2, 1.2)
-            ln = rr.uniform(20, 90)*hit
-            px, py = x-74, by+70
-            line(d, cam, [(px, py), (px-math.cos(a)*ln, py+math.sin(a)*ln)],
-                 (255, 214, 120), 2.4, int(220*hit), live=False)
-    if speed_lines > 0.02:                                        # линии скорости
-        rr = random.Random(5)
         for i in range(16):
-            y0 = rr.uniform(120, 820)
+            a = rr.uniform(-1.3, 1.3)
+            ln = rr.uniform(26, 110)*hit
+            px, py = x-78, chest+10
+            line(d, cam, [(px, py), (px-math.cos(a)*ln, py+math.sin(a)*ln)],
+                 (255, 214, 120), 2.4, int(230*hit), live=False)
+    if speed_lines > 0.02:
+        rr = random.Random(5)
+        for i in range(18):
+            y0 = rr.uniform(120, 860)
             ln = rr.uniform(160, 420)*speed_lines
-            line(d, cam, [(rr.uniform(60, 420), y0), (rr.uniform(60, 420)+ln, y0-ln*0.42)],
-                 (236, 206, 112), 2.0, int(150*speed_lines), live=False)
+            x0 = rr.uniform(60, 460)
+            line(d, cam, [(x0, y0), (x0+ln, y0-ln*0.42)],
+                 (236, 206, 112), 2.0, int(140*speed_lines), live=False)
 
 
 # ------------------------------------------------------------- ЛЕСТНИЦА
@@ -186,3 +248,46 @@ def flash(im, k):
     if k <= 0.004: return
     lay = Image.new("RGBA", im.size, (255, 255, 255, int(255*clamp(k))))
     im.alpha_composite(lay, (0, 0))
+
+
+# ------------------------------------------------------- СНАРЯДЫ И ЗАЛ
+def dumbbell(d, cam, p, r=26, col=(150, 156, 170)):
+    """Гантель в кисти: гриф и два блина."""
+    x, y = p
+    line(d, cam, [(x-r*1.5, y), (x+r*1.5, y)], col, 5.0, live=False)
+    for s_ in (-1, 1):
+        d.rounded_rectangle(cam.box(x+s_*r*1.5-r*0.42, y-r*0.86, x+s_*r*1.5+r*0.42, y+r*0.86),
+                            radius=cam.r(r*0.3), fill=col + (255,))
+
+
+def kettlebell(d, cam, p, r=34):
+    """Гиря: шар и дужка."""
+    x, y = p
+    d.ellipse(cam.box(x-r, y-r*0.9, x+r, y+r), fill=(66, 70, 84, 255))
+    d.ellipse(cam.box(x-r, y-r*0.9, x+r, y+r), outline=LINE + (255,), width=_w(cam, 2.6))
+    d.arc(cam.box(x-r*0.66, y-r*1.9, x+r*0.66, y-r*0.3), start=200, end=340,
+          fill=LINE + (255,), width=_w(cam, 5.0))
+
+
+def treadmill(im, d, cam, t=0.0, x=960, floor=980, speed=0.0):
+    """Беговая дорожка: полотно бежит, на консоли мигают цифры."""
+    bw, bh = 460, 46
+    rrect(d, cam, (x-bw/2, floor-bh, x+bw/2, floor), 14, FILLD, LINE, 3.0)
+    off = (t*speed*120) % 46
+    for i in range(int(bw/46)+2):
+        px = x-bw/2+10+i*46-off
+        if px < x-bw/2+6 or px > x+bw/2-6: continue
+        line(d, cam, [(px, floor-bh+8), (px, floor-8)], LINE2, 2.2, 170, live=False)
+    line(d, cam, [(x+bw/2-30, floor-bh), (x+bw/2-10, floor-250)], LINE, 3.0)
+    line(d, cam, [(x-bw/2+30, floor-bh), (x-bw/2+10, floor-250)], LINE, 3.0)
+    line(d, cam, [(x-bw/2+10, floor-250), (x+bw/2-10, floor-250)], LINE, 3.0)
+    rrect(d, cam, (x+bw/2-150, floor-350, x+bw/2+20, floor-250), 10, (12, 14, 20), LINE, 2.6)
+    add_glow(im, *cam.p(x+bw/2-65, floor-300), cam.r(90), (120, 210, 255), 0.26, 2.4)
+    soft_ellipse(im, *cam.p(x, floor-6), cam.r(240), cam.r(28), (0, 0, 0), 0.5)
+
+
+def pull_bar(d, cam, x=960, top=240, floor=980):
+    """Турник у стены — фон для залов, чтобы сцена не была пустой."""
+    line(d, cam, [(x-260, top), (x+260, top)], LINE, 4.0)
+    line(d, cam, [(x-260, top), (x-260, floor)], LINE, 3.0)
+    line(d, cam, [(x+260, top), (x+260, floor)], LINE, 3.0)

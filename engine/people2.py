@@ -404,6 +404,16 @@ POSES.update({
  # подъём по лестнице: ведущая нога высоко, корпус вперёд
  "climb":      dict(thigh_l=44, shin_l=96, thigh_r=98, shin_r=92,
                     ua_l=66, fa_l=36, ua_r=118, fa_r=128, lean=14, head=-6, hip_y=0.0),
+ # подъём гантелей на бицепс
+ "curl_dn":    dict(thigh_l=100, shin_l=92, thigh_r=80, shin_r=88,
+                    ua_l=96, fa_l=92, ua_r=84, fa_r=88, lean=2, head=0, hip_y=0.0),
+ "curl_up":    dict(thigh_l=100, shin_l=92, thigh_r=80, shin_r=88,
+                    ua_l=96, fa_l=-28, ua_r=84, fa_r=-24, lean=2, head=0, hip_y=0.0),
+ # мах гирей: присед с прямой спиной и выброс вперёд
+ "kettle_dn":  dict(thigh_l=58, shin_l=112, thigh_r=54, shin_r=108,
+                    ua_l=74, fa_l=66, ua_r=70, fa_r=62, lean=26, head=-6, hip_y=0.12),
+ "kettle_up":  dict(thigh_l=96, shin_l=92, thigh_r=86, shin_r=90,
+                    ua_l=18, fa_l=14, ua_r=14, fa_r=10, lean=-4, head=-2, hip_y=0.0),
  # сидит обхватив колени — «дно»
  "curl":       dict(thigh_l=16, shin_l=132, thigh_r=12, shin_r=128,
                     ua_l=30, fa_l=120, ua_r=24, fa_r=126, lean=16, head=18, hip_y=0.10),
