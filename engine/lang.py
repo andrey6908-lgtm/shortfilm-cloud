@@ -377,12 +377,12 @@ AR = {
 
     "cal_month": "أكت",
 
-    "th_num":    "3 000",
+    "th_num":    "٣٠٠٠",
     "th_or":     "أم",
-    "th_one":    "1؟",
-    "th_nights": "3 000 ليلة",
+    "th_one":    "١؟",
+    "th_nights": "٣٠٠٠ ليلة",
     "th_day":    "يوم واحد؟",
-    "th_short":  "3 000؟",
+    "th_short":  "٣٠٠٠؟",
     "th_or2":    "أم",
     "th_hook":   "واحدة أخرى؟",
 
