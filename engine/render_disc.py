@@ -266,7 +266,7 @@ def frame(i):
         line(d, cam, [(100, 980), (1820, 980)], LINE, 3.2)
         soft_ellipse(im, *cam.p(900, 972), cam.r(230), cam.r(22), (0, 0, 0), 0.40)
         k = 0.5+0.5*math.sin(l*3.0)
-        inf = hero(im, cam, (900, 890), 400,
+        inf = hero(im, cam, (880, 912), 400,
                           pose_mix("pushup_up", "pushup_dn", k), t=t,
                           mood="angry", look=0.3, band=True)
         day_badge(d, 12)
@@ -337,7 +337,7 @@ def frame(i):
         cam = Cam(1.1, 960, 820)
         line(d, cam, [(200, 980), (1720, 980)], LINE, 3.2)
         k = 0.5+0.5*math.sin(l*3.6)
-        inf = hero(im, cam, (900, 890), 400,
+        inf = hero(im, cam, (880, 912), 400,
                           pose_mix("pushup_up", "pushup_dn", k), t=t, mood="angry", band=True)
         draw_demon(im, d, cam, (1660, 972), 70, "stand", t=t, alpha=80, heat=0.5)
         day_badge(d, 190)
