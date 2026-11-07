@@ -19,12 +19,17 @@ import io, math
 import cairosvg
 from PIL import Image
 
-INK    = "#0B0C16"      # «чёрный», тонированный в синеву
-CLOTH1 = "#3C69CE"
-CLOTH2 = "#24479A"
-SLEEVE = "#27499F"
-PANTS  = "#1E2A44"
-FACE   = "#F2ECDC"
+# ПАЛИТРА. Взято лучшее из двух школ: пропорции и гладкий вектор — из
+# принятого прототипа, светлое тело с чёрной обводкой и живое лицо — из хита
+# ниши. Тёмный герой прототипа на ЧЁРНОМ фоне тонул (сверка 07.11,
+# СРАВНЕНИЕ-С-ОРИГИНАЛОМ.jpg): у Ifverse фон вагона светлый, у Day One чёрный.
+SKIN   = "#F0EADC"      # тело и лицо — светлые, читаются на чёрном
+OUTL   = "#15151C"      # обводка каждой части, как у них
+CLOTH1 = "#3B6ACF"
+CLOTH2 = "#2A4EA6"
+SLEEVE = "#315CB8"
+PANTS  = "#2B3550"
+FACE   = "#15151C"      # черты лица — тёмные по светлой голове
 BAND   = "#D62C34"      # повязка второй половины фильма
 
 
@@ -51,6 +56,11 @@ def _limb(p0, p1, p2, r0, r1, r2):
 
 
 def _dot(p, r): return f'<circle cx="{p[0]:.1f}" cy="{p[1]:.1f}" r="{r:.1f}"'
+
+
+def _st(w):
+    """Чёрная обводка части тела: без неё фигура сливается в пятно."""
+    return f' stroke="{OUTL}" stroke-width="{w:.1f}" stroke-linejoin="round"'
 
 
 def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
@@ -108,54 +118,72 @@ def build_svg(W, H, cam, hip, h, pose, flip=False, mood="neutral", look=0.0,
              f'Q {neck[0]:.1f} {neck[1]:.1f} {sx1:.1f} {sy1:.1f} '
              f'L {hx1:.1f} {hy1:.1f} Z')
 
-    skin = "#141420" if dark else CLOTH1
-    skin2 = "#0E0E18" if dark else CLOTH2
-    sle = "#101020" if dark else SLEEVE
-    pnt = "#0D0D16" if dark else PANTS
-    ink = "#241018" if dark else INK
+    sk = "#1C1C26" if dark else SKIN
+    cl1 = "#20202C" if dark else CLOTH1
+    cl2 = "#16161F" if dark else CLOTH2
+    sle = "#1A1A24" if dark else SLEEVE
+    pnt = "#14141C" if dark else PANTS
+    out = "#0A0A0E" if dark else OUTL
+    sw_line = hr*0.17                    # толщина обводки от размера головы
 
     g = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" '
          f'width="{W}" height="{H}">',
          f'<defs><linearGradient id="cl" x1="0" y1="0" x2="0" y2="1">'
-         f'<stop offset="0" stop-color="{skin}"/>'
-         f'<stop offset="1" stop-color="{skin2}"/></linearGradient></defs>',
-         f'<g opacity="{alpha:.3f}">']
-    for p in legs: g.append(f'<path d="{p}" fill="{pnt}"/>')
-    for p, r in feet: g.append(_dot(p, r) + f' fill="{ink}"/>')
-    g.append(f'<path d="{torso}" fill="url(#cl)"/>')
-    g.append(_dot(sh_scr, sw*0.80*k) + f' fill="url(#cl)"/>')
-    for p in arms: g.append(f'<path d="{p}" fill="{sle}"/>')
-    for p, r in hands: g.append(_dot(p, r) + f' fill="{ink}"/>')
-    g.append(_dot(head, hr) + f' fill="{ink}"/>')
+         f'<stop offset="0" stop-color="{cl1}"/>'
+         f'<stop offset="1" stop-color="{cl2}"/></linearGradient></defs>',
+         f'<g opacity="{alpha:.3f}" stroke-linecap="round">']
 
-    # черты лица: два глаза и рот, кремовые — как в принятом прошлом круге
-    ex, ey = hr*0.38, hr*0.10
-    dx = look*hr*0.12*f
-    lid = {"tired": 0.42, "sad": 0.30}.get(mood, 0.0)
+    def part(path, fill):
+        g.append(f'<path d="{path}" fill="{fill}"{_st(sw_line)}/>')
+
+    # порядок как у них: дальние конечности → корпус → ближние → голова
+    part(legs[0], pnt)
+    g.append(_dot(feet[0][0], feet[0][1]) + f' fill="{sk}"{_st(sw_line)}/>')
+    part(arms[0], sle)
+    g.append(_dot(hands[0][0], hands[0][1]) + f' fill="{sk}"{_st(sw_line)}/>')
+    part(torso, "url(#cl)")
+    g.append(_dot(sh_scr, sw*0.80*k) + f' fill="url(#cl)"{_st(sw_line)}/>')
+    part(legs[1], pnt)
+    g.append(_dot(feet[1][0], feet[1][1]) + f' fill="{sk}"{_st(sw_line)}/>')
+    part(arms[1], sle)
+    g.append(_dot(hands[1][0], hands[1][1]) + f' fill="{sk}"{_st(sw_line)}/>')
+    g.append(_dot(head, hr) + f' fill="{sk}"{_st(sw_line*1.15)}/>')
+
+    # ЛИЦО: глаза с веком, брови и рот — по ним читается состояние
+    fc = "#2A2A36" if dark else FACE
+    ex, ey = hr*0.34, hr*0.06
+    dx = look*hr*0.11*f
+    lid = {"tired": 0.52, "sad": 0.40, "wired": 0.0}.get(mood, 0.18)
+    eh = hr*0.30*(1.0 - lid*0.55)
     for s_ in (-1, 1):
         cxe = head[0] + s_*ex + dx
-        cye = head[1] + ey
-        g.append(f'<rect x="{cxe-hr*0.21:.1f}" y="{cye-hr*0.085+hr*lid*0.12:.1f}" '
-                 f'width="{hr*0.42:.1f}" height="{hr*0.17*(1-lid*0.5):.1f}" '
-                 f'rx="{hr*0.07:.1f}" fill="{FACE}"/>')
-    mw = hr*(0.50 if mood != "angry" else 0.36)
-    g.append(f'<rect x="{head[0]-mw/2:.1f}" y="{head[1]+hr*0.50:.1f}" '
-             f'width="{mw:.1f}" height="{hr*0.075:.1f}" rx="{hr*0.037:.1f}" '
-             f'fill="{FACE}"/>')
-    if mood == "angry":                       # брови домиком — злость
-        for s_ in (-1, 1):
-            x0 = head[0] + s_*ex - hr*0.20
-            g.append(f'<path d="M {x0:.1f} {head[1]-hr*0.20:.1f} '
-                     f'l {hr*0.40:.1f} {s_*hr*0.10:.1f}" stroke="{FACE}" '
-                     f'stroke-width="{hr*0.075:.1f}" stroke-linecap="round" fill="none"/>')
+        cye = head[1] + ey + hr*lid*0.10
+        g.append(f'<ellipse cx="{cxe:.1f}" cy="{cye:.1f}" rx="{hr*0.155:.1f}" '
+                 f'ry="{eh/2:.1f}" fill="{fc}"/>')
+        if lid > 0.3:                       # усталое веко — полоска поверх глаза
+            g.append(f'<path d="M {cxe-hr*0.19:.1f} {cye-eh*0.42:.1f} '
+                     f'h {hr*0.38:.1f}" stroke="{fc}" stroke-width="{hr*0.10:.1f}" '
+                     f'fill="none"/>')
+    brow_y = head[1] - hr*0.30
+    for s_ in (-1, 1):
+        x0 = head[0] + s_*ex - hr*0.21 + dx
+        tilt = {"angry": -0.16, "sad": 0.14, "tired": 0.08}.get(mood, 0.0)
+        g.append(f'<path d="M {x0:.1f} {brow_y + s_*tilt*hr:.1f} '
+                 f'l {hr*0.42:.1f} {-s_*tilt*hr*2:.1f}" stroke="{fc}" '
+                 f'stroke-width="{hr*0.105:.1f}" fill="none"/>')
+    mw = hr*0.42
+    mouth = {"angry": -hr*0.10, "sad": hr*0.12}.get(mood, 0.0)
+    g.append(f'<path d="M {head[0]-mw/2:.1f} {head[1]+hr*0.46:.1f} '
+             f'q {mw/2:.1f} {mouth:.1f} {mw:.1f} 0" stroke="{fc}" '
+             f'stroke-width="{hr*0.09:.1f}" fill="none"/>')
     if band:
-        bx0 = head[0]-hr*1.04
-        g.append(f'<path d="M {bx0:.1f} {head[1]-hr*0.30:.1f} '
-                 f'h {hr*2.08:.1f}" stroke="{BAND}" stroke-width="{hr*0.34:.1f}" '
-                 f'stroke-linecap="butt" fill="none"/>')
-        g.append(f'<path d="M {head[0]+hr*0.90:.1f} {head[1]-hr*0.26:.1f} '
-                 f'l {hr*0.70:.1f} {hr*0.34:.1f}" stroke="{BAND}" '
-                 f'stroke-width="{hr*0.20:.1f}" stroke-linecap="round" fill="none"/>')
+        bx0 = head[0]-hr*1.06
+        g.append(f'<path d="M {bx0:.1f} {head[1]-hr*0.52:.1f} '
+                 f'h {hr*2.12:.1f}" stroke="{BAND}" stroke-width="{hr*0.30:.1f}" '
+                 f'fill="none"/>')
+        g.append(f'<path d="M {head[0]+hr*0.92:.1f} {head[1]-hr*0.48:.1f} '
+                 f'l {hr*0.72:.1f} {hr*0.36:.1f}" stroke="{BAND}" '
+                 f'stroke-width="{hr*0.18:.1f}" fill="none"/>')
     g.append("</g></svg>")
     return "".join(g), head, hr, world
 
