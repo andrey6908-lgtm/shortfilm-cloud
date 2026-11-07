@@ -457,7 +457,11 @@ if RTL:
     except ImportError:
         raise SystemExit("для арабского нужны arabic-reshaper и python-bidi")
     def _shape(v):
-        return get_display(arabic_reshaper.reshape(v)) if isinstance(v, str) else v
+        # base_dir="R" обязателен: направление строки bidi берёт по первому
+        # СИЛЬНОМУ символу, а цифра таковой не является — строка «3 000 ليلة»
+        # без этого разворачивается наизнанку и число уезжает влево
+        # (поймано на готовой обложке 07.11).
+        return get_display(arabic_reshaper.reshape(v), base_dir="R") if isinstance(v, str) else v
     L = {k: _shape(v) for k, v in L.items()}
 
 # проверка полноты: таблица языка должна покрывать русскую целиком
