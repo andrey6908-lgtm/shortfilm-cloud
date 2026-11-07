@@ -64,12 +64,15 @@ def build(lang, speed, out_path, video_name, duration):
     os.environ["SHORTFILM_LANG"] = lang
     sys.modules.pop("lang", None)
     import lang as L
-    e, t = EXTRA[lang], L.L
+    # Берём СЫРУЮ таблицу, а не L: для арабского L уже прогнан через
+    # arabic_reshaper ради PIL, а в описание YouTube нужен обычный арабский —
+    # переразложенный текст там не ищется и не читается машинами.
+    e, t = EXTRA[lang], L.TABLES[lang]
 
     def chapter(key):
         if key == "demon": return e["demon"]
-        if key == "n01":   return (t["n01a"] + t["n01b"]).strip()
-        return t[key].rstrip(".").strip()
+        v = (t["n01a"] + t["n01b"]) if key == "n01" else t[key]
+        return " ".join(v.split()).rstrip(".").strip()   # склейка n01 даёт двойные пробелы
 
     lines = []
     for sec, key in CHAPTERS:
