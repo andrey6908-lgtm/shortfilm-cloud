@@ -103,7 +103,7 @@ jobs:
         run: |
           # arabic-reshaper и python-bidi нужны арабской версии: PIL сам не
           # соединяет вязь и не разворачивает строку справа налево.
-          pip install --quiet --upgrade numpy pillow imageio-ffmpeg arabic-reshaper python-bidi
+          pip install --quiet --upgrade numpy pillow imageio-ffmpeg arabic-reshaper python-bidi cairosvg
           echo "FF=$(python3 -c 'import imageio_ffmpeg as f; print(f.get_ffmpeg_exe())')" >> "$GITHUB_ENV"
           "$(python3 -c 'import imageio_ffmpeg as f; print(f.get_ffmpeg_exe())')" -version | head -1
 
@@ -247,7 +247,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.ASSETS_KEY }}
       - run: git clone --depth 1 git@github.com:${{ github.repository_owner }}/shortfilm-assets.git /tmp/assets
-      - run: pip install --quiet --upgrade numpy pillow arabic-reshaper python-bidi
+      - run: pip install --quiet --upgrade numpy pillow arabic-reshaper python-bidi cairosvg
 
       - name: Нарисовать названные кадры
         env:
@@ -285,7 +285,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.ASSETS_KEY }}
       - run: git clone --depth 1 git@github.com:${{ github.repository_owner }}/shortfilm-assets.git /tmp/assets
-      - run: pip install --quiet --upgrade numpy pillow arabic-reshaper python-bidi
+      - run: pip install --quiet --upgrade numpy pillow arabic-reshaper python-bidi cairosvg
 
       - name: Нарисовать обложку
         env:

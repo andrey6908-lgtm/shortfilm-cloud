@@ -15,6 +15,7 @@ from lang_disc import L
 from rooms import *
 from rooms import _w, rrect, line as rline
 import rooms_disc as rd
+import vecman as vm
 from people2 import *
 from render3 import phone_at          # телефон в руке — общий с первым фильмом
 from PIL import Image
@@ -50,7 +51,19 @@ def cut_dim(t):
         if abs(t-tc) < hw: a = max(a, 255*smoother(1-abs(t-tc)/hw))
     return a
 
-HERO = dict(skin=CREAM, ink=INK)
+HERO = dict()        # векторному герою не нужны ключи кожи и обводки
+
+
+def hero(im, cam, hip, h, pose, t=0.0, mood="neutral", look=0.0,
+         band=False, dark=False, alpha=1.0, **_ignored):
+    """Герой фильма — ВЕКТОРНЫЙ (принятый прототип, РАЗБОР IFVERSE, круг 5).
+
+    Его слово 07.11: «вот этого я бы хотел, он лучше». Углы поз те же, что у
+    старого PIL-скелета, поэтому раскадровка не тронута; повязка, тёмный
+    двойник и прозрачность — параметрами.
+    """
+    return vm.draw_vecman(im, cam, hip, h, pose, t=t, mood=mood, look=look,
+                          band=band, dark=dark, alpha=alpha)
 BOT = H - 150
 
 
@@ -105,7 +118,7 @@ def frame(i):
         l = lt(t, "sleep")
         cam = Cam(lerp(1.10, 1.20, smoother(l/7)), 820, 690)
         bedroom(im, d, cam, t, clock_text="5:00", rain=False)
-        draw_person(im, d, cam, (700, 790), 430, "lie", t=t, mood="tired",
+        hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired",
                     look=0.2, **HERO)
         add_glow(im, *cam.p(206, 668), cam.r(210), RED, 0.40*flicker(t, 9.0), 2.4)
         whisper(d, L["w0"], t, 7.4, hold=3.2, size=46, at=(1020, 300))
@@ -115,7 +128,7 @@ def frame(i):
         l = lt(t, "over")
         cam = Cam(1.22, 300, 660)
         bedroom(im, d, cam, t, clock_text="5:08" if l < 2.4 else "7:40", rain=False)
-        draw_person(im, d, cam, (700, 790), 430, "lie", t=t, mood="tired", **HERO)
+        hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired", **HERO)
         for k in range(2):
             yy = 470 - k*52 - (l*8) % 40
             d.text(cam.p(840+k*26, yy), "z", font=FI(30+k*10), fill=(196, 204, 222, 150))
@@ -126,7 +139,7 @@ def frame(i):
         l = lt(t, "sofa1")
         cam = Cam(lerp(1.06, 1.15, smoother(l/7)), 900, 700)
         _sofa(im, d, cam, t)
-        inf = draw_person(im, d, cam, (820, 800), 420, "phone_face", t=t,
+        inf = hero(im, cam, (820, 800), 420, "phone_face", t=t,
                           mood="wired", look=0.4, lit=0.8, **HERO)
         phone_at(im, d, cam, inf["hand_r"], 54, 1.0, l*1.4)
         draw_demon(im, d, cam, (1290, 846), 430, "stand", t=t,
@@ -139,7 +152,7 @@ def frame(i):
         l = lt(t, "desk")
         cam = Cam(lerp(1.04, 1.14, smoother(l/6)), 940, 700)
         rd.desk_night(im, d, cam, t, lamp=1.0)
-        draw_person(im, d, cam, (900, 870), 420, "sit_chair", t=t,
+        hero(im, cam, (900, 870), 420, "sit_chair", t=t,
                     mood="tired", look=0.3, lit=0.9, **HERO)
         draw_demon(im, d, cam, (560, 880), 440, "reach", t=t,
                    alpha=int(255*fade(t, 26.0, 31, 1.4, 0.01)), heat=1.0)
@@ -153,24 +166,24 @@ def frame(i):
         k = int(l // 2.0)
         if k == 0:
             cam = Cam(1.18, 900, 700); _sofa(im, d, cam, t)
-            inf = draw_person(im, d, cam, (860, 800), 420, "slump", t=t,
+            inf = hero(im, cam, (860, 800), 420, "slump", t=t,
                               mood="wired", lit=0.85, **HERO)
             phone_at(im, d, cam, inf["hand_r"], 54, 1.0, l*3.0)
             day_badge(d, 112, mark="skip")
         elif k == 1:
             cam = Cam(1.26, 760, 700)
             bedroom(im, d, cam, t, clock_text="4:12", rain=False)
-            draw_person(im, d, cam, (700, 790), 430, "lie", t=t, mood="tired", **HERO)
+            hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired", **HERO)
             day_badge(d, 200, mark="skip")
         elif k == 2:
             cam = Cam(1.14, 940, 700); rd.desk_night(im, d, cam, t, lamp=0.6)
-            draw_person(im, d, cam, (900, 870), 420, "slump", t=t,
+            hero(im, cam, (900, 870), 420, "slump", t=t,
                         mood="tired", lit=0.5, **HERO)
             day_badge(d, 340, mark="skip")
         else:
             cam = Cam(1.30, 760, 700)
             bedroom(im, d, cam, t, clock_text="5:00", rain=False)
-            draw_person(im, d, cam, (700, 790), 430, "lie", t=t, mood="tired", **HERO)
+            hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired", **HERO)
             add_glow(im, *cam.p(206, 668), cam.r(220), RED, 0.46, 2.4)
             day_badge(d, 365, mark="skip")
         caption(d, im, L["year"], fade(t, 33.4, 38.6, 0.8, 0.8), y=250, bold=True)
@@ -188,11 +201,10 @@ def frame(i):
         hero_x = lerp(430, 700, step)
         refl_a = int(240*clamp((l-2.2)/1.6))
         if refl_a > 6:
-            draw_person(im, d, cam, (mx, my+mry*0.82), 400, "stand", t=t,
-                        mood="angry", look=-0.4, skin=(16, 14, 20),
-                        ink=(58, 20, 28), alpha=refl_a, face_on=True)
+            hero(im, cam, (mx, my+mry*0.82), 400, "stand", t=t,
+                        mood="angry", look=-0.4, dark=True, alpha=refl_a/255.0)
             add_glow(im, *cam.p(mx, my), cam.r(mrx*1.3), MAG, 0.22, 2.6)
-        draw_person(im, d, cam, (hero_x, 880), 430, "stand", t=t, mood="tired",
+        hero(im, cam, (hero_x, 880), 430, "stand", t=t, mood="tired",
                     look=0.6, lit=0.5, **HERO)
         if l > 6.0:
             f = FW(126)
@@ -205,7 +217,7 @@ def frame(i):
         l = lt(t, "bottom")
         rd.spotlight(im, d, Cam(1.0), 960, 980, k=clamp(l/1.4))
         cam = Cam(lerp(0.96, 1.08, smoother(l/12)), 960, 760)
-        draw_person(im, d, cam, (960, 960), 330, "curl", t=t, mood="tired",
+        hero(im, cam, (960, 960), 330, "curl", t=t, mood="tired",
                     look=0.0, lit=0.9, **HERO)
         caption(d, im, L["mid_1"], fade(t, 51.0, 56.4, 0.9, 0.9), y=420)
         caption(d, im, L["mid_2a"], fade(t, 57.2, 61.6, 0.9, 0.7), y=400)
@@ -227,7 +239,7 @@ def frame(i):
         else:
             cam = Cam(lerp(1.30, 1.14, smoother((l-5.6)/3.4)), 820, 700)
             bedroom(im, d, cam, t, clock_text="5:00", rain=False)
-            draw_person(im, d, cam, (700, 790), 430,
+            hero(im, cam, (700, 790), 430,
                         pose_mix("lie", "sit_bed", smoother(clamp((l-5.8)/1.8))),
                         t=t, mood="neutral", look=0.4, lit=0.6, **HERO)
             day_badge(d, 1, alpha=clamp((l-7.4)/1.0), mark="done")
@@ -242,10 +254,9 @@ def frame(i):
         draw_demon(im, d, cam, (1420, 790), 430, "stand", t=t,
                    alpha=int(235*fade(t, 72.0, 79, 1.2, 0.01)), heat=1.0)
         whisper(d, L["w6"], t, 73.0, hold=2.6, size=48, at=(1300, 250))
-        inf = draw_person(im, d, cam, (960, 760), 400,
+        inf = hero(im, cam, (960, 760), 400,
                           pose_mix("run_a", "run_b", 0.5+0.5*math.sin(ph)),
-                          t=t, mood="angry", look=0.5, **HERO)
-        _band(d, cam, inf, math.sin(ph))
+                          t=t, mood="angry", look=0.5, band=True)
         day_badge(d, 3)
 
     elif inside(t, "push1"):
@@ -255,10 +266,9 @@ def frame(i):
         line(d, cam, [(100, 980), (1820, 980)], LINE, 3.2)
         soft_ellipse(im, *cam.p(900, 972), cam.r(230), cam.r(22), (0, 0, 0), 0.40)
         k = 0.5+0.5*math.sin(l*3.0)
-        inf = draw_person(im, d, cam, (900, 900), 400,
+        inf = hero(im, cam, (900, 900), 400,
                           pose_mix("pushup_up", "pushup_dn", k), t=t,
-                          mood="angry", look=0.3, **HERO)
-        _band(d, cam, inf)
+                          mood="angry", look=0.3, band=True)
         day_badge(d, 12)
         if l > 1.6:                                          # счёт повторов
             n = 1 + int((l-1.6)*1.4)
@@ -273,10 +283,9 @@ def frame(i):
         hit = max(0.0, math.sin(l*2.8))**3
         rd.heavy_bag(im, d, cam, t, hit=hit, speed_lines=clamp((l-1.0)/2.0)*0.7,
                      hero_x=900, floor=980)
-        inf = draw_person(im, d, cam, (900, 860), 420,
+        inf = hero(im, cam, (900, 860), 420,
                           pose_mix("guard", "punch", hit), t=t, mood="angry",
                           look=0.6, **HERO)
-        _band(d, cam, inf)
         draw_demon(im, d, cam, (480, 920), 240, "stand", t=t, alpha=170, heat=0.8)
         day_badge(d, 64)
         whisper(d, L["w5"], t, 93.0, hold=2.6, size=52, at=(1300, 250))
@@ -287,10 +296,9 @@ def frame(i):
         rd.pull_bar(d, cam, 700, 250, 980)
         line(d, cam, [(100, 980), (1820, 980)], LINE, 3.2)
         k = 0.5 + 0.5*math.sin(l*3.2)
-        inf = draw_person(im, d, cam, (960, 900), 420,
+        inf = hero(im, cam, (960, 900), 420,
                           pose_mix("curl_dn", "curl_up", k), t=t, mood="angry",
                           look=0.4, **HERO)
-        _band(d, cam, inf)
         rd.dumbbell(d, cam, inf["hand_l"], 26)
         rd.dumbbell(d, cam, inf["hand_r"], 26)
         soft_ellipse(im, *cam.p(960, 972), cam.r(150), cam.r(20), (0, 0, 0), 0.45)
@@ -302,10 +310,9 @@ def frame(i):
         cam = Cam(lerp(1.00, 1.09, smoother(l/6)), 960, 700)
         rd.treadmill(im, d, cam, t, x=960, floor=980, speed=1.0)
         ph = l*4.2
-        inf = draw_person(im, d, cam, (900, 934), 400,
+        inf = hero(im, cam, (900, 934), 400,
                           pose_mix("run_a", "run_b", 0.5+0.5*math.sin(ph)),
-                          t=t, mood="angry", look=0.5, **HERO)
-        _band(d, cam, inf, math.sin(ph))
+                          t=t, mood="angry", look=0.5, band=True)
         draw_demon(im, d, cam, (1560, 960), 170, "stand", t=t, alpha=140, heat=0.7)
         day_badge(d, 96)
 
@@ -315,10 +322,9 @@ def frame(i):
         line(d, cam, [(100, 980), (1820, 980)], LINE, 3.2)
         rd.pull_bar(d, cam, 1340, 240, 980)
         k = 0.5 + 0.5*math.sin(l*2.6)
-        inf = draw_person(im, d, cam, (900, 900), 420,
+        inf = hero(im, cam, (900, 900), 420,
                           pose_mix("kettle_dn", "kettle_up", k), t=t,
-                          mood="angry", look=0.5, **HERO)
-        _band(d, cam, inf)
+                          mood="angry", look=0.5, band=True)
         hx = (inf["hand_l"][0]+inf["hand_r"][0])/2
         hy = (inf["hand_l"][1]+inf["hand_r"][1])/2
         rd.kettlebell(d, cam, (hx, hy+26), 34)
@@ -331,9 +337,8 @@ def frame(i):
         cam = Cam(1.1, 960, 820)
         line(d, cam, [(200, 980), (1720, 980)], LINE, 3.2)
         k = 0.5+0.5*math.sin(l*3.6)
-        inf = draw_person(im, d, cam, (900, 900), 400,
-                          pose_mix("pushup_up", "pushup_dn", k), t=t, mood="angry", **HERO)
-        _band(d, cam, inf)
+        inf = hero(im, cam, (900, 900), 400,
+                          pose_mix("pushup_up", "pushup_dn", k), t=t, mood="angry", band=True)
         draw_demon(im, d, cam, (1660, 972), 70, "stand", t=t, alpha=80, heat=0.5)
         day_badge(d, 190)
 
@@ -350,10 +355,9 @@ def frame(i):
         hero_y = 980 - step*92 - frac*92
         cam = Cam(1.0, hero_x + 140, hero_y - 250)
         rd.stairs(im, d, cam, t, shift=0)
-        inf = draw_person(im, d, cam, (hero_x, hero_y), 400,
+        inf = hero(im, cam, (hero_x, hero_y), 400,
                           pose_mix("climb", "stand", 0.5+0.5*math.sin(ph*math.pi)),
-                          t=t, mood="angry", look=0.5, **HERO)
-        _band(d, cam, inf, math.sin(ph))
+                          t=t, mood="angry", look=0.5, band=True)
         soft_ellipse(im, *cam.p(hero_x, hero_y-6), cam.r(90), cam.r(14), (0, 0, 0), 0.45)
         day_badge(d, 270)
         # Демон стоит выше по лестнице и преграждает. Когда герой доходит до
@@ -383,9 +387,8 @@ def frame(i):
         cam = Cam(lerp(1.00, 1.14, smoother(l/14)), 960, 640)
         rd.summit(im, d, cam, t, k=1.0, rise=smoother(clamp(l/12)))
         turn = smoother(clamp((l-5.0)/3.0))
-        inf = draw_person(im, d, cam, (900, 700), 300, "stand", t=t,
-                          mood="neutral", look=lerp(-0.2, 0.7, turn), lit=1.0, **HERO)
-        _band(d, cam, inf, math.sin(t*1.4)*1.6)
+        inf = hero(im, cam, (900, 700), 300, "stand", t=t,
+                          mood="neutral", look=lerp(-0.2, 0.7, turn), band=True)
         soft_ellipse(im, *cam.p(900, 704), cam.r(80), cam.r(12), (0, 0, 0), 0.35)
         rd.flash(im, clamp((1.2-l)/1.2)*0.9)
         caption(d, im, L["save_1"], fade(t, 131.0, 137.0, 1.0, 0.8), y=250)
@@ -398,7 +401,7 @@ def frame(i):
         # а часы ещё не зазвонили (4:58). Демон уходит за край кадра.
         cam = Cam(lerp(1.20, 1.10, smoother(l/6)), 820, 700)
         bedroom(im, d, cam, t, warm=0.55, clock_text="4:58", rain=False)
-        draw_person(im, d, cam, (700, 790), 430, "sit_bed", t=t, mood="neutral",
+        hero(im, cam, (700, 790), 430, "sit_bed", t=t, mood="neutral",
                     look=0.4, lit=0.7, **HERO)
         gone = smoother(clamp((l-1.4)/3.4))
         draw_demon(im, d, cam, (1320 + gone*520, 900), 120, "stand", t=t,
