@@ -119,19 +119,19 @@ def city(im, d, cam, t=0.0, pan=0.0):
                     wy = gy - h_ + 22 + cy_*62
                     if wy > gy - 26: continue
                     warm = 0.6 + 0.4*math.sin(t*1.7 + ph*6)
-                    c = (int(214*warm) + 30, int(178*warm) + 24, int(96*warm) + 16)
-                    d.rectangle(cam.box(wx, wy, wx+24, wy+30), fill=c + (235,))
+                    c = (int(150*warm) + 22, int(124*warm) + 18, int(66*warm) + 12)
+                    d.rectangle(cam.box(wx, wy, wx+24, wy+30), fill=c + (190,))
                     if depth == 2 and ((t/per + ph) % 1.0) > 0.92:
-                        add_glow(im, *cam.p(wx+12, wy+15), cam.r(64), (255, 210, 130), 0.30, 2.4)
+                        add_glow(im, *cam.p(wx+12, wy+15), cam.r(58), (255, 210, 130), 0.16, 2.4)
     line(d, cam, [(-300, ground), (2400, ground)], LINE, 3.0)
     for i in range(7):                                        # фонари ближнего плана
         lx = 60 + i*330 - pan*0.95
         if lx < -220 or lx > 2200: continue
         line(d, cam, [(lx, ground), (lx, ground-262), (lx+58, ground-276)], LINE, 2.8)
-        fl = 0.42 + 0.10*math.sin(t*3.1 + i*1.7)              # фонарь подрагивает
+        fl = 0.26 + 0.07*math.sin(t*3.1 + i*1.7)              # фонарь подрагивает
         add_glow(im, *cam.p(lx+58, ground-272), cam.r(230), (255, 206, 142), fl, 2.2)
         soft_ellipse(im, *cam.p(lx+58, ground-6), cam.r(190), cam.r(26),
-                     (255, 196, 128), 0.20)
+                     (255, 196, 128), 0.12)
     add_glow(im, *cam.p(1680 - pan*0.10, 180), cam.r(240), (176, 196, 236), 0.16, 2.6)
 
 

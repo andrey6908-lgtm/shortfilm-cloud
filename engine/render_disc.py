@@ -254,7 +254,7 @@ def frame(i):
         draw_demon(im, d, cam, (1420, 790), 430, "stand", t=t,
                    alpha=int(235*fade(t, 72.0, 79, 1.2, 0.01)), heat=1.0)
         whisper(d, L["w6"], t, 73.0, hold=2.6, size=48, at=(1300, 250))
-        inf = hero(im, cam, (960, 760), 400,
+        inf = hero(im, cam, (960, 760), 470,
                           pose_mix("run_a", "run_b", 0.5+0.5*math.sin(ph)),
                           t=t, mood="angry", look=0.5, band=True)
         day_badge(d, 3)
@@ -266,7 +266,7 @@ def frame(i):
         line(d, cam, [(100, 980), (1820, 980)], LINE, 3.2)
         soft_ellipse(im, *cam.p(900, 972), cam.r(230), cam.r(22), (0, 0, 0), 0.40)
         k = 0.5+0.5*math.sin(l*3.0)
-        inf = hero(im, cam, (880, 912), 400,
+        inf = hero(im, cam, (880, 905), 450,
                           pose_mix("pushup_up", "pushup_dn", k), t=t,
                           mood="angry", look=0.3, band=True)
         day_badge(d, 12)
@@ -283,7 +283,7 @@ def frame(i):
         hit = max(0.0, math.sin(l*3.4))**2
         rd.heavy_bag(im, d, cam, t, hit=hit, speed_lines=clamp((l-1.0)/2.0)*0.7,
                      hero_x=980, floor=980)
-        inf = hero(im, cam, (980, 900), 420,
+        inf = hero(im, cam, (980, 900), 480,
                           pose_mix("guard", "punch", hit), t=t, mood="angry",
                           look=0.6, **HERO)
         draw_demon(im, d, cam, (480, 920), 240, "stand", t=t, alpha=170, heat=0.8)
@@ -296,7 +296,7 @@ def frame(i):
         rd.pull_bar(d, cam, 700, 250, 980)
         line(d, cam, [(100, 980), (1820, 980)], LINE, 3.2)
         k = 0.5 + 0.5*math.sin(l*3.2)
-        inf = hero(im, cam, (960, 900), 420,
+        inf = hero(im, cam, (960, 900), 480,
                           pose_mix("curl_dn", "curl_up", k), t=t, mood="angry",
                           look=0.4, **HERO)
         rd.dumbbell(d, cam, inf["hand_l"], 26)
@@ -310,7 +310,7 @@ def frame(i):
         cam = Cam(lerp(1.00, 1.09, smoother(l/6)), 960, 700)
         rd.treadmill(im, d, cam, t, x=960, floor=980, speed=1.0)
         ph = l*4.2
-        inf = hero(im, cam, (900, 934), 400,
+        inf = hero(im, cam, (900, 934), 455,
                           pose_mix("run_a", "run_b", 0.5+0.5*math.sin(ph)),
                           t=t, mood="angry", look=0.5, band=True)
         draw_demon(im, d, cam, (1560, 960), 170, "stand", t=t, alpha=140, heat=0.7)
@@ -322,7 +322,7 @@ def frame(i):
         line(d, cam, [(100, 980), (1820, 980)], LINE, 3.2)
         rd.pull_bar(d, cam, 1340, 240, 980)
         k = 0.5 + 0.5*math.sin(l*2.6)
-        inf = hero(im, cam, (900, 900), 420,
+        inf = hero(im, cam, (900, 900), 480,
                           pose_mix("kettle_dn", "kettle_up", k), t=t,
                           mood="angry", look=0.5, band=True)
         hx = (inf["hand_l"][0]+inf["hand_r"][0])/2
@@ -337,7 +337,7 @@ def frame(i):
         cam = Cam(1.1, 960, 820)
         line(d, cam, [(200, 980), (1720, 980)], LINE, 3.2)
         k = 0.5+0.5*math.sin(l*3.6)
-        inf = hero(im, cam, (880, 912), 400,
+        inf = hero(im, cam, (880, 905), 450,
                           pose_mix("pushup_up", "pushup_dn", k), t=t, mood="angry", band=True)
         draw_demon(im, d, cam, (1660, 972), 70, "stand", t=t, alpha=80, heat=0.5)
         day_badge(d, 190)
@@ -355,7 +355,7 @@ def frame(i):
         hero_y = 980 - step*92 - frac*92
         cam = Cam(1.0, hero_x + 140, hero_y - 250)
         rd.stairs(im, d, cam, t, shift=0)
-        inf = hero(im, cam, (hero_x, hero_y), 400,
+        inf = hero(im, cam, (hero_x, hero_y), 455,
                           pose_mix("climb", "stand", 0.5+0.5*math.sin(ph*math.pi)),
                           t=t, mood="angry", look=0.5, band=True)
         soft_ellipse(im, *cam.p(hero_x, hero_y-6), cam.r(90), cam.r(14), (0, 0, 0), 0.45)
@@ -387,7 +387,7 @@ def frame(i):
         cam = Cam(lerp(1.00, 1.14, smoother(l/14)), 960, 640)
         rd.summit(im, d, cam, t, k=1.0, rise=smoother(clamp(l/12)))
         turn = smoother(clamp((l-5.0)/3.0))
-        inf = hero(im, cam, (900, 700), 300, "stand", t=t,
+        inf = hero(im, cam, (900, 706), 360, "stand", t=t,
                           mood="neutral", look=lerp(-0.2, 0.7, turn), band=True)
         soft_ellipse(im, *cam.p(900, 704), cam.r(80), cam.r(12), (0, 0, 0), 0.35)
         rd.flash(im, clamp((1.2-l)/1.2)*0.9)
