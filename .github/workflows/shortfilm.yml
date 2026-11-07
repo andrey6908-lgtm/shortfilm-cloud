@@ -188,24 +188,30 @@ jobs:
           OUT="${{ needs.setup.outputs.name }}.mp4"
           A=/tmp/assets/audio
           DUR=$(python3 -c "print(${{ needs.setup.outputs.frames }}/${{ needs.setup.outputs.fps }})")
-          # Темп версии тянет и звук: все отметки рецепта умножаются на тот же
-          # коэффициент, иначе щелчок и шорох разъезжаются с картинкой.
           SP=${{ needs.setup.outputs.speed }}
-          read M1_END M1_FADE M2_S TICK_END TICK_FADE M2_MS TICK_MS CLK_MS RST_MS < <(python3 -c "sp=float('$SP'); v=[170,166,168,114,128]; ms=[168,18,133.6,148.9]; print(' '.join(str(round(x*sp,3)) for x in v), ' '.join(str(int(round(x*sp*1000))) for x in ms))")
-          echo "темп $SP: музыка до $M1_END с, щелчок $CLK_MS мс, шорох $RST_MS мс"
-          echo "темп $SP: щелчок $CLK с, шорох $RST с, подъём со $M2_DELAY с"
+          FILM=${{ needs.setup.outputs.film }}
           FADE=4.5
           FST=$(python3 -c "print(max(0.0, $DUR - $FADE))")
-          echo "длительность $DUR с, затухание с $FST с"
+          echo "фильм $FILM, длительность $DUR с, темп $SP"
+          if [ "$FILM" = "render_disc" ]; then
+            # «ДИСЦИПЛИНА»: перелом ровно посередине, на 62-й секунде. До него —
+            # печальная тема и тиканье часов, после — приподнятая. Щелчок на
+            # кнопке будильника в момент решения, шорох на белой вспышке.
+            read M1_END M1_FADE M2_S TICK_END TICK_FADE M2_MS TICK_MS CLK_MS RST_MS < <(python3 -c "sp=float('$SP'); v=[63,59,62,38,34]; ms=[62,5,62.2,126.2]; print(' '.join(str(round(x*sp,3)) for x in v), ' '.join(str(int(round(x*sp*1000))) for x in ms))")
+          else
+            read M1_END M1_FADE M2_S TICK_END TICK_FADE M2_MS TICK_MS CLK_MS RST_MS < <(python3 -c "sp=float('$SP'); v=[170,166,168,114,128]; ms=[168,18,133.6,148.9]; print(' '.join(str(round(x*sp,3)) for x in v), ' '.join(str(int(round(x*sp*1000))) for x in ms))")
+          fi
+          M2_LEN=$(python3 -c "print(round(max(8.0, $DUR - $M2_S + 2), 3))")
+          echo "музыка до $M1_END с, подъём со $M2_S с ($M2_LEN с), щелчок $CLK_MS мс, шорох $RST_MS мс"
           # ГОЧА: Golden Cage 110,8 с — короче тёмной части, поэтому зациклен
           # входом (-stream_loop 3). Без этого amix обрезал ролик до 110,8 с.
           "$FF" -nostdin -hide_banner -loglevel error -y \
-            -i "$IN" -stream_loop 3 -i "$A/golden_cage.mp3" -i "$A/borderless.mp3" \
+            -i "$IN" -stream_loop 3 -i "$A/golden_cage.mp3" -stream_loop 3 -i "$A/borderless.mp3" \
             -stream_loop 20 -i "$A/clock_tick.mp3" -i "$A/mouse_click.mp3" -i "$A/whoosh.mp3" \
             -filter_complex "
               [1:a]atrim=0:$M1_END,asetpts=N/SR/TB,afade=t=in:st=0:d=2,
                    afade=t=out:st=$M1_FADE:d=4,volume=0.42[m1];
-              [2:a]atrim=0:20,asetpts=N/SR/TB,adelay=$M2_MS|$M2_MS,
+              [2:a]atrim=0:$M2_LEN,asetpts=N/SR/TB,adelay=$M2_MS|$M2_MS,
                    afade=t=in:st=$M2_S:d=2.5,volume=0.50[m2];
               [3:a]atrim=0:$TICK_END,asetpts=N/SR/TB,adelay=$TICK_MS|$TICK_MS,volume=0.30,
                    afade=t=out:st=$TICK_FADE:d=4[tick];
