@@ -134,28 +134,30 @@ im = png(bg).filter(ImageFilter.GaussianBlur(9)).convert("RGBA")
 # План по бёдра (голова вдвое мельче прошлого круга), плечи покатые,
 # рукава сужаются к кистям, кисти видны. Корпус сужается книзу, не трапеция.
 cx, cy, hr = 960, 452, 132
-sw = hr * 1.24                      # плечи узкие: у них толстовка облегает
+sw = hr * 1.24
 
-body = (f'M {cx-sw*1.14} {H} '
-        f'L {cx-sw*1.00} {cy+hr*2.10} '
-        f'Q {cx-sw*0.96} {cy+hr*1.08} {cx-hr*0.56} {cy+hr*0.78} '   # покатое плечо
+# Толстовка: плечо покатое, рукав ВЫХОДИТ ИЗ ПЛЕЧА одной линией с корпусом,
+# книзу чуть сужается, кисть — продолжение рукава со скруглённым концом.
+body = (f'M {cx-sw*1.02} {H} '
+        f'L {cx-sw*0.98} {cy+hr*2.10} '
+        f'Q {cx-sw*0.96} {cy+hr*1.06} {cx-hr*0.56} {cy+hr*0.78} '
         f'Q {cx} {cy+hr*0.46} {cx+hr*0.56} {cy+hr*0.78} '
-        f'Q {cx+sw*0.96} {cy+hr*1.08} {cx+sw*1.00} {cy+hr*2.10} '
-        f'L {cx+sw*1.14} {H} Z')
+        f'Q {cx+sw*0.96} {cy+hr*1.06} {cx+sw*0.98} {cy+hr*2.10} '
+        f'L {cx+sw*1.02} {H} Z')
 
 def sleeve(s_):
-    """Рукав полосой вдоль корпуса, сужается к кисти, кисть — его продолжение."""
-    o, i = s_*sw*1.02, s_*sw*0.62          # внешний и внутренний край у плеча
-    o2, i2 = s_*sw*1.10, s_*sw*0.74        # у кисти
-    return (f'M {cx+o} {cy+hr*1.16} '
-            f'Q {cx+o*1.06} {cy+hr*2.20} {cx+o2} {cy+hr*3.30} '
-            f'L {cx+i2} {cy+hr*3.26} '
-            f'Q {cx+i*1.02} {cy+hr*2.16} {cx+i} {cy+hr*1.30} Z')
+    """Рукав от плеча к кисти: внешний край — продолжение плеча, внутренний
+    отделяет рукав от корпуса. Сужение 1,02 sw → 0,80 sw."""
+    return (f'M {cx+s_*sw*0.97} {cy+hr*0.98} '
+            f'Q {cx+s_*sw*1.06} {cy+hr*1.90} {cx+s_*sw*1.00} {cy+hr*3.06} '
+            f'Q {cx+s_*sw*0.90} {cy+hr*3.42} {cx+s_*sw*0.74} {cy+hr*3.20} '
+            f'Q {cx+s_*sw*0.70} {cy+hr*2.10} {cx+s_*sw*0.62} {cy+hr*1.24} Z')
 
 def hand(s_):
-    hx, hy = cx + s_*sw*0.92, cy + hr*3.52
-    return (f'<path d="M {hx-sw*0.19} {hy-hr*0.22} h {sw*0.38} '
-            f'a {sw*0.19} {hr*0.30} 0 0 1 -{sw*0.38} 0 Z" fill="{INK}"/>')
+    """Кисть: скруглённый конец шириной рукава, не шарик и не копытце."""
+    hx = cx + s_*sw*0.875
+    return (f'<path d="M {hx-sw*0.13} {cy+hr*3.26} '
+            f'Q {hx} {cy+hr*3.74} {hx+sw*0.13} {cy+hr*3.22} Z" fill="{INK}"/>')
 
 fig = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}">
 <defs>
@@ -163,9 +165,9 @@ fig = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}">
   <stop offset="0" stop-color="#3C69CE"/><stop offset="1" stop-color="#24479A"/>
  </linearGradient>
 </defs>
+<path d="{sleeve(-1)}" fill="#2A4FAD"/>
+<path d="{sleeve(+1)}" fill="#2A4FAD"/>
 <path d="{body}" fill="url(#cl)"/>
-<path d="{sleeve(-1)}" fill="#27499F"/>
-<path d="{sleeve(+1)}" fill="#27499F"/>
 {hand(-1)}
 {hand(+1)}
 <path d="M {cx-hr*0.56} {cy+hr*0.80} Q {cx} {cy+hr*1.22} {cx+hr*0.56} {cy+hr*0.80}"
@@ -236,7 +238,7 @@ out = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
 d = ImageDraw.Draw(out)
 d.rectangle([0, 0, W, LB], fill=(0, 0, 0))
 d.rectangle([0, H - LB, W, H], fill=(0, 0, 0))
-out.save("vec3.jpg", quality=95)
+out.save("vec4.jpg", quality=95)
 
 # ============================================================= ЗАМЕР
 b = np.asarray(out).astype(np.float32)
@@ -244,6 +246,6 @@ g = b.mean(2)
 core = b[int(H * 0.07):int(H * 0.93)]
 mx, mn = core.max(2), core.min(2)
 s = np.where(mx > 8, (mx - mn) / np.maximum(mx, 1), 0)
-print("круг 3: ярк %.1f  медиана %.0f  99-й перц %.0f  насыщ %.3f  провалов в чёрный %.1f%%"
+print("круг 4: ярк %.1f  медиана %.0f  99-й перц %.0f  насыщ %.3f  провалов в чёрный %.1f%%"
       % (g.mean(), np.median(g), np.percentile(g, 99), s.mean(), ((mx / 255.0) < 0.06).mean() * 100))
 print("цель Ifverse: медиана 170  99-й перц 122-233  насыщ 0,18-0,40  провалов 3,3%")
