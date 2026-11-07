@@ -208,28 +208,51 @@ def stairs(im, d, cam, t=0.0, shift=0.0):
 
 
 # -------------------------------------------------------------- ВЕРШИНА
-def summit(im, d, cam, t=0.0, k=1.0):
-    """Единственная цветная сцена фильма: рассвет с вершины."""
-    # Градиент неба: (H,1,3) растягивается на всю ширину. Прежняя транспозиция
-    # давала полосу шириной 3 px и обрезанное небо справа (поймано 07.11).
+def summit(im, d, cam, t=0.0, k=1.0, rise=0.0):
+    """Вершина на рассвете — единственная цветная сцена, и она ЖИВАЯ.
+
+    Его слово 07.11: «стоит эта сцена, нет динамики, не на чем залипнуть».
+    Поэтому солнце ВСХОДИТ (rise 0→1), небо вместе с ним теплеет, облака
+    идут поперёк кадра, по склонам ползёт свет.
+    """
     yy = np.linspace(0, 1, H)[:, None, None]
-    sky_top = np.array([26, 18, 36], np.float32)
-    sky_bot = np.array([236, 126, 46], np.float32)
-    a = np.repeat(sky_top + (sky_bot - sky_top) * (yy ** 2.1), W, axis=1)
+    top = np.array([26, 18, 36], np.float32) + np.array([10, 6, 4]) * rise
+    bot = np.array([208, 104, 42], np.float32) + np.array([40, 34, 22]) * rise
+    a = np.repeat(top + (bot - top) * (yy ** (2.3 - 0.5*rise)), W, axis=1)
     sky = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).convert("RGBA")
     im.paste(sky.resize((im.width, im.height), Image.BILINEAR), (0, 0))
-    sx, sy = 1080, 620
-    add_glow(im, sx, sy, 520, (255, 206, 128), 0.75*k, 2.0)
-    d.ellipse(cam.box(sx-70, sy-70, sx+70, sy+70), fill=(255, 226, 170, 255))
-    for i, (yb, col) in enumerate(((700, (92, 54, 44)), (780, (58, 34, 32)), (860, (28, 18, 20)))):
-        rr = random.Random(10+i)
+
+    # облака: длинные полосы, идут поперёк кадра с разной скоростью
+    rr = random.Random(4)
+    lay = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    dl = ImageDraw.Draw(lay, "RGBA")
+    for i in range(7):
+        y0 = 180 + i*74 + rr.uniform(-20, 20)
+        spd = 10 + i*4
+        x0 = (rr.uniform(-600, 1800) + t*spd) % 3000 - 700
+        ln = rr.uniform(300, 760)
+        hh = rr.uniform(14, 30)
+        al = int(40 + 50*rise - i*4)
+        dl.rounded_rectangle([int(x0*SS), int(y0*SS), int((x0+ln)*SS), int((y0+hh)*SS)],
+                             radius=int(hh*SS/2), fill=(255, 196, 150, max(0, al)))
+    im.alpha_composite(lay.filter(ImageFilter.GaussianBlur(10*SS)), (0, 0))
+
+    sx = 1080
+    sy = int(lerp(700, 540, rise))                 # солнце поднимается
+    add_glow(im, sx, sy, int(460 + 180*rise), (255, 206, 128), 0.55 + 0.30*rise, 2.0)
+    d.ellipse(cam.box(sx-70, sy-70, sx+70, sy+70), fill=(255, 230, 182, 255))
+
+    for i, (yb, col) in enumerate(((700, (92, 54, 44)), (780, (58, 34, 32)),
+                                   (860, (28, 18, 20)))):
+        rr2 = random.Random(10+i)
         pts = [(-200, 1200)]
         xx = -200
         while xx < 2200:
-            xx += rr.uniform(180, 320)
-            pts.append((xx, yb + rr.uniform(-70, 60)))
+            xx += rr2.uniform(180, 320)
+            pts.append((xx, yb + rr2.uniform(-70, 60)))
         pts.append((2200, 1200))
-        d.polygon([cam.p(*p) for p in pts], fill=col + (255,))
+        c = tuple(int(v + (34 + i*8)*rise) for v in col)   # свет ползёт по склонам
+        d.polygon([cam.p(*p) for p in pts], fill=c + (255,))
 
 
 # --------------------------------------------------------- ЛУЧ И ВСПЫШКА
