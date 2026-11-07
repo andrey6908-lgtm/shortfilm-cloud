@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from film import *
 from lang_disc import L
 from rooms import *
+from rooms import _w, rrect, line as rline
 import rooms_disc as rd
 from people2 import *
 from render3 import phone_at          # телефон в руке — общий с первым фильмом
