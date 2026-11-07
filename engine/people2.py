@@ -387,20 +387,23 @@ def draw_demon(im, d, cam, hip, h, pose, t=0.0, alpha=255, grin=1.0, flip=False,
 POSES.update({
  # упор лёжа: корпус горизонтален головой влево, руки отвесно в пол,
  # ноги прямой линией назад
- "pushup_up":  dict(thigh_l=6,  shin_l=2,  thigh_r=-6, shin_r=-2,
-                    ua_l=84, fa_l=96, ua_r=96, fa_r=84, lean=-86, head=16, hip_y=0.12),
- "pushup_dn":  dict(thigh_l=6,  shin_l=2,  thigh_r=-6, shin_r=-2,
-                    ua_l=58, fa_l=124, ua_r=62, fa_r=120, lean=-88, head=20, hip_y=0.22),
+ # упор лёжа: руки ОТВЕСНО в пол, ноги прямой линией назад, корпус над полом
+ "pushup_up":  dict(thigh_l=4,  shin_l=0,  thigh_r=-4, shin_r=0,
+                    ua_l=92, fa_l=90, ua_r=88, fa_r=90, lean=-88, head=14, hip_y=0.0),
+ "pushup_dn":  dict(thigh_l=4,  shin_l=0,  thigh_r=-4, shin_r=0,
+                    ua_l=62, fa_l=122, ua_r=58, fa_r=126, lean=-90, head=18, hip_y=0.10),
  # бег: шаг, корпус подан вперёд, руки работают встречно
- "run_a":      dict(thigh_l=66, shin_l=104, thigh_r=116, shin_r=56,
-                    ua_l=132, fa_l=74, ua_r=52, fa_r=108, lean=16, head=-8, hip_y=0.0),
- "run_b":      dict(thigh_l=114, shin_l=58, thigh_r=68, shin_r=102,
-                    ua_l=50, fa_l=106, ua_r=134, fa_r=72, lean=16, head=-8, hip_y=0.0),
+ # бег: локти согнуты и работают противоходом, колено ведущей ноги высоко
+ "run_a":      dict(thigh_l=54, shin_l=112, thigh_r=124, shin_r=62,
+                    ua_l=146, fa_l=52, ua_r=38, fa_r=128, lean=18, head=-10, hip_y=0.0),
+ "run_b":      dict(thigh_l=122, shin_l=64, thigh_r=56, shin_r=110,
+                    ua_l=36, fa_l=126, ua_r=148, fa_r=54, lean=18, head=-10, hip_y=0.0),
  # бокс: стойка с руками у лица и прямой правой
- "guard":      dict(thigh_l=104, shin_l=92, thigh_r=74, shin_r=86,
-                    ua_l=112, fa_l=-48, ua_r=70, fa_r=-118, lean=4, head=2, hip_y=0.0),
- "punch":      dict(thigh_l=108, shin_l=94, thigh_r=72, shin_r=84,
-                    ua_l=114, fa_l=-46, ua_r=4,  fa_r=2,   lean=8, head=0, hip_y=0.0),
+ # бокс: стойка и УДАР ВЫПАДОМ — корпус подан, задняя нога распрямлена
+ "guard":      dict(thigh_l=106, shin_l=92, thigh_r=72, shin_r=88,
+                    ua_l=120, fa_l=-54, ua_r=64, fa_r=-124, lean=6, head=2, hip_y=0.0),
+ "punch":      dict(thigh_l=58, shin_l=96, thigh_r=132, shin_r=120,
+                    ua_l=124, fa_l=-50, ua_r=2,  fa_r=0,   lean=20, head=-4, hip_y=0.06),
  # подъём по лестнице: ведущая нога высоко, корпус вперёд
  "climb":      dict(thigh_l=44, shin_l=96, thigh_r=98, shin_r=92,
                     ua_l=66, fa_l=36, ua_r=118, fa_r=128, lean=14, head=-6, hip_y=0.0),
