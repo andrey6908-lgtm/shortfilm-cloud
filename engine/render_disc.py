@@ -119,7 +119,7 @@ def frame(i):
         cam = Cam(lerp(1.10, 1.20, smoother(l/7)), 820, 690)
         bedroom(im, d, cam, t, clock_text="5:00", rain=False)
         hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired", look=0.2)
-        bed_cover(d, cam)
+        bed_cover(d, cam, top=760)
         add_glow(im, *cam.p(206, 668), cam.r(210), RED, 0.40*flicker(t, 9.0), 2.4)
         whisper(d, L["w0"], t, 7.4, hold=3.2, size=46, at=(1020, 300))
 
@@ -129,7 +129,7 @@ def frame(i):
         cam = Cam(1.22, 300, 660)
         bedroom(im, d, cam, t, clock_text="5:08" if l < 2.4 else "7:40", rain=False)
         hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired")
-        bed_cover(d, cam)
+        bed_cover(d, cam, top=760)
         for k in range(2):
             yy = 470 - k*52 - (l*8) % 40
             d.text(cam.p(840+k*26, yy), "z", font=FI(30+k*10), fill=(196, 204, 222, 150))
@@ -140,7 +140,7 @@ def frame(i):
         l = lt(t, "sofa1")
         cam = Cam(lerp(1.06, 1.15, smoother(l/7)), 900, 700)
         _sofa(im, d, cam, t)
-        inf = hero(im, cam, (830, 716), 430, "phone_face", t=t,
+        inf = hero(im, cam, (860, 724), 430, "slouch", t=t,
                           mood="wired", look=0.4, lit=0.8, **HERO)
         phone_at(im, d, cam, inf["hand_r"], 54, 1.0, l*1.4)
         draw_demon(im, d, cam, (1290, 846), 430, "stand", t=t,
@@ -167,7 +167,7 @@ def frame(i):
         k = int(l // 2.0)
         if k == 0:
             cam = Cam(1.18, 900, 700); _sofa(im, d, cam, t)
-            inf = hero(im, cam, (870, 716), 430, "slump", t=t,
+            inf = hero(im, cam, (880, 730), 430, "slouch", t=t,
                               mood="wired", lit=0.85, **HERO)
             phone_at(im, d, cam, inf["hand_r"], 54, 1.0, l*3.0)
             day_badge(d, 112, mark="skip")
@@ -175,7 +175,7 @@ def frame(i):
             cam = Cam(1.26, 760, 700)
             bedroom(im, d, cam, t, clock_text="4:12", rain=False)
             hero(im, cam, (700, 790), 430, "lie", t=t, mood="tired")
-            bed_cover(d, cam)
+            bed_cover(d, cam, top=760)
             day_badge(d, 200, mark="skip")
         elif k == 2:
             cam = Cam(1.14, 940, 700); rd.desk_night(im, d, cam, t, lamp=0.6)

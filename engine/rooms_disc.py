@@ -105,15 +105,18 @@ def city(im, d, cam, t=0.0, pan=0.0):
             bx = x - pan*k
             if bx > 2100 or bx + w_ < -200: continue
             d.rectangle(cam.box(bx, gy-h_, bx+w_, gy), fill=col + (255,))
-            d.rectangle(cam.box(bx, gy-h_, bx+w_, gy),
-                        outline=LINE2 + (150 + depth*30,), width=_w(cam, 2.0))
+            # без жёсткой обводки: у них дома читаются массой и светом,
+            # а контур по линейке делает картинку чертежом (сверка 07.11)
+            if depth == 2:
+                d.rectangle(cam.box(bx, gy-h_, bx+w_, gy-h_+3),
+                            fill=(38, 44, 58, 120))
             cols = max(2, int(w_/62))
             rows_n = max(2, int(h_/74))
             for cy_ in range(rows_n):
                 for cx_ in range(cols):
                     ph = win_rr.random()*9.0
                     per = 7.0 + win_rr.random()*16.0
-                    on = ((t/per + ph) % 1.0) > 0.58        # окно живёт своим циклом
+                    on = ((t/per + ph) % 1.0) > 0.66        # окно живёт своим циклом
                     if not on: continue
                     wx = bx + 14 + cx_*(w_-24)/max(1, cols-1) * 0.92
                     wy = gy - h_ + 22 + cy_*62

@@ -424,6 +424,9 @@ POSES.update({
                     ua_l=74, fa_l=66, ua_r=70, fa_r=62, lean=26, head=-6, hip_y=0.12),
  "kettle_up":  dict(thigh_l=96, shin_l=92, thigh_r=86, shin_r=90,
                     ua_l=18, fa_l=14, ua_r=14, fa_r=10, lean=-4, head=-2, hip_y=0.0),
+ # развалился на диване: спина откинута, одна нога вытянута вперёд
+ "slouch":     dict(thigh_l=14, shin_l=16, thigh_r=26, shin_r=74,
+                    ua_l=100, fa_l=82, ua_r=62, fa_r=-38, lean=-22, head=16, hip_y=0.06),
  # сидит обхватив колени — «дно»
  "curl":       dict(thigh_l=16, shin_l=132, thigh_r=12, shin_r=128,
                     ua_l=30, fa_l=120, ua_r=24, fa_r=126, lean=16, head=18, hip_y=0.10),
