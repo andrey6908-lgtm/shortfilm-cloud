@@ -21,7 +21,8 @@ from PIL import Image, ImageDraw
 OUT = sys.argv[1] if len(sys.argv) > 1 else "thumb"
 os.makedirs(OUT, exist_ok=True)
 
-FB = lambda s: font("ariblk.ttf", s)      # Arial Black — заголовок обложки
+import lang as _lang
+FB = lambda s: font(_lang.thumb_font(), s)   # заголовок обложки, свой на язык
 COLD = (36, 58, 104)
 WARM = (150, 86, 34)
 

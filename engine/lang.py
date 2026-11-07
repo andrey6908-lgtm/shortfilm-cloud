@@ -423,6 +423,20 @@ FONTS = {
 }
 
 
+# Шрифт заголовка ОБЛОЖКИ. Arial Black не держит арабский вовсе — буквы
+# выходят пустыми квадратами, и ни лог, ни статус прогона об этом не скажут
+# (поймано глазами на готовой обложке 07.11). Заодно развели обложки по
+# языкам: у каждой версии свой характер заголовка.
+THUMB_FONT = {"ru": "ariblk.ttf", "pl": "ariblk.ttf", "fr": "framd.ttf",
+              "es": "trebucbd.ttf", "it": "verdanab.ttf", "ro": "georgiab.ttf",
+              "ar": "tahomabd.ttf"}
+
+
+def thumb_font():
+    """Шрифт заголовка обложки текущего языка."""
+    return THUMB_FONT.get(LANG, "ariblk.ttf")
+
+
 def fonts():
     """Четыре шрифта текущего языка: тонкий, обычный, узкий, курсив."""
     return FONTS.get(LANG, FONTS["ru"])
