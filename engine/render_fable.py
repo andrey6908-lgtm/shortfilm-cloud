@@ -121,7 +121,7 @@ def window_demon(im, d, cam, t, alpha, heat=0.8, h=300):
     crop = lay.crop((int(pad*SS), int(pad*SS),
                      int(pad*SS + (box[2]-box[0])*SS), int(pad*SS + (box[3]-box[1])*SS)))
     arr = np.asarray(crop).astype(np.float32)
-    arr[..., 3] *= 0.62*(alpha/255.0)
+    arr[..., 3] *= 0.82*(alpha/255.0)
     im.alpha_composite(Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGBA"),
                        (int(box[0]*SS), int(box[1]*SS)))
     # перекладины рамы поверх отражения
@@ -156,7 +156,9 @@ def phone_flat(d, cam, cx, cy, w=70):
 def wave_pose(t):
     """Девушка машет: рука поднята, кисть качается."""
     p = dict(POSES["stand"])
-    p["ua_l"] = -62; p["fa_l"] = -92 + math.sin(t*5.2)*16
+    # рука уходит ВНЕШНЕЙ стороной, иначе кисть прячется за длинными волосами
+    # (поймано предпросмотром 12.11: при -62° машущей руки не было видно)
+    p["ua_l"] = -150; p["fa_l"] = -100 + math.sin(t*5.2)*18
     return p
 
 def walk_phone(phase):
